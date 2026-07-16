@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sesame Provider Success — Supply/Demand Balance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --crit:#d03b3b; --serious:#ec835a; --warn:#fab219; --good:#0ca30c;
+    --blue:#2a78d6; --blue-deep:#104281;
+    --card:#ffffff;
+    --sesame:#3b1780; --sesame-ink:#ffffff;
+  }
+  :root[data-theme="dark"]{
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
+    --blue:#3987e5; --blue-deep:#9ec5f4; --card:#232322;
+    --sesame:#a172ec; --sesame-ink:#0d0d0d;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--page);color:var(--text-primary);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px 80px}
+  .brandbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+    padding:16px 0 14px;border-bottom:1px solid var(--border);margin-bottom:24px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .wordmark{font-family:"Bebas Neue","Oswald","Arial Narrow","Futura Condensed","Futura",system-ui,sans-serif;
+    font-weight:700;font-stretch:condensed;text-transform:uppercase;font-size:34px;letter-spacing:0.04em;
+    color:var(--sesame);line-height:1;display:inline-block;-webkit-text-stroke:0.6px var(--sesame)}
+  .brand-div{width:1px;height:26px;background:var(--border)}
+  .brand-tag{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:0.02em}
+  .brand-actions{display:flex;align-items:center;gap:10px}
+  .btn-csv{display:inline-flex;align-items:center;gap:7px;background:var(--sesame);color:var(--sesame-ink);
+    border:none;border-radius:8px;padding:9px 15px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer}
+  .btn-csv:hover{filter:brightness(1.08)}
+  .btn-csv svg{width:15px;height:15px;stroke:var(--sesame-ink);fill:none;stroke-width:2}
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  h1{font-size:23px;margin:0 0 4px;letter-spacing:-0.01em}
+  .sub{color:var(--text-secondary);font-size:14px;max-width:760px;margin:0}
+  .toggle{border:1px solid var(--border);background:var(--card);color:var(--text-secondary);
+    border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+  .toggle:hover{color:var(--text-primary)}
+  section{margin-top:30px}
+  h2{font-size:15px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);
+    margin:0 0 14px;font-weight:600}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .kpi .v{font-size:26px;font-weight:650;letter-spacing:-0.01em}
+  .kpi .l{font-size:12.5px;color:var(--text-secondary);margin-top:2px}
+  .kpi .h{font-size:11.5px;color:var(--muted);margin-top:6px}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+  .card .rail{position:absolute;left:0;top:0;bottom:0;width:4px}
+  .card .rank{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:0.04em}
+  .card .seg{font-size:17px;font-weight:650;margin:2px 0 8px}
+  .card .metric{display:flex;gap:18px;margin-top:8px;flex-wrap:wrap}
+  .card .metric .m{}
+  .card .metric .mv{font-size:19px;font-weight:650;font-variant-numeric:tabular-nums}
+  .card .metric .ml{font-size:11.5px;color:var(--text-secondary)}
+  .card .note{font-size:12.5px;color:var(--text-secondary);margin-top:11px;line-height:1.45}
+  .chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;margin-top:2px}
+  .mention{font-size:12.5px;color:var(--text-secondary);margin-top:12px;line-height:1.55}
+  .mention b{color:var(--text-primary);font-weight:600}
+  /* heatmap */
+  .hm-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 16px 10px;overflow-x:auto}
+  table.hm{border-collapse:separate;border-spacing:2px;font-size:11px}
+  table.hm th.svc{text-align:right;padding-right:10px;color:var(--text-secondary);font-weight:600;white-space:nowrap;font-size:12px;position:sticky;left:0;background:var(--card);z-index:2}
+  table.hm th.st{color:var(--muted);font-weight:600;font-size:10.5px;height:22px;vertical-align:bottom;padding-bottom:3px}
+  table.hm td{width:20px;height:22px;text-align:center;border-radius:4px;color:#fff;font-variant-numeric:tabular-nums;cursor:default;font-size:9.5px;font-weight:600}
+  table.hm.rhm td{min-width:88px;height:30px;font-size:13px;padding:0 8px}
+  table.hm.rhm th.rst{font-size:12px;color:var(--text-secondary);padding:0 8px 5px;text-align:center;height:auto}
+  table.hm.rhm th.svc{font-size:13px}
+  table.hm td.empty{background:var(--grid);color:var(--muted)}
+  .legend{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:12px;color:var(--text-secondary);flex-wrap:wrap}
+  .legend .scale{display:flex;height:12px;border-radius:3px;overflow:hidden;width:220px}
+  .legend .scale span{flex:1}
+  /* table */
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  .controls input,.controls select{border:1px solid var(--border);background:var(--card);color:var(--text-primary);
+    border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit}
+  .controls input{min-width:150px}
+  .ms{position:relative;display:inline-block}
+  .ms-btn{border:1px solid var(--border);background:var(--card);color:var(--text-primary);border-radius:8px;
+    padding:8px 30px 8px 12px;font-size:13px;font-family:inherit;cursor:pointer;text-align:left;white-space:nowrap;position:relative;min-width:120px}
+  .ms-btn:hover{border-color:var(--muted)}
+  .ms-btn.active{border-color:var(--blue);color:var(--blue)}
+  .ms-car{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:10px;pointer-events:none}
+  .ms-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:40;background:var(--card);border:1px solid var(--border);
+    border-radius:9px;padding:5px;min-width:100%;box-shadow:0 8px 22px rgba(0,0,0,.14);display:none;max-height:280px;overflow:auto}
+  .ms-panel.open{display:block}
+  .ms-opt{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--text-primary)}
+  .ms-opt:hover{background:rgba(137,135,129,.12)}
+  .ms-opt input{margin:0;min-width:0;width:15px;height:15px;accent-color:var(--blue);cursor:pointer}
+  .ms-clear{display:block;width:100%;text-align:left;border:none;background:none;color:var(--muted);font-size:12px;
+    font-family:inherit;padding:6px 10px 8px;cursor:pointer;border-top:1px solid var(--grid);margin-top:3px}
+  .ms-clear:hover{color:var(--blue)}
+  .tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  table.data{width:100%;border-collapse:collapse;font-size:13px}
+  table.data th{text-align:left;padding:10px 12px;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;
+    color:var(--text-secondary);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;background:var(--card);position:sticky;top:0}
+  table.data th.num,table.data td.num{text-align:right;font-variant-numeric:tabular-nums}
+  table.data td{padding:9px 12px;border-bottom:1px solid var(--grid)}
+  table.data tr:last-child td{border-bottom:none}
+  table.data th .ar{color:var(--muted);font-size:10px;margin-left:3px}
+  .stat{display:inline-flex;align-items:center;gap:5px;font-weight:600;font-size:12px}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .barcell{position:relative;min-width:90px}
+  .bar{height:16px;border-radius:3px;display:inline-block;vertical-align:middle}
+  .foot{color:var(--muted);font-size:12px;margin-top:10px}
+  .tip{position:fixed;pointer-events:none;background:var(--text-primary);color:var(--surface-1);
+    padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.45;opacity:0;transition:opacity .08s;z-index:50;max-width:230px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+  .method{font-size:12.5px;color:var(--text-secondary);background:var(--card);border:1px solid var(--border);
+    border-radius:10px;padding:13px 15px;line-height:1.6}
+  .method b{color:var(--text-primary)}
+  .method-sub{margin:0 0 10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;
+    color:var(--sesame);padding-bottom:7px;border-bottom:1px solid var(--grid)}
+  .method-sub:not(:first-child){margin-top:22px}
+  .risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .risk-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .risk-panel.nocov{border-left:4px solid var(--crit)}
+  .risk-panel.frag{border-left:4px solid var(--serious)}
+  .risk-head{font-size:15.5px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:9px;margin-bottom:10px;line-height:1.3}
+  .risk-dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .risk-stat{font-size:14px;color:var(--text-secondary);line-height:1.5;margin-bottom:6px}
+  .risk-stat b{color:var(--text-primary);font-weight:700}
+  .risk-sub{font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:6px}
+  .risk-collbl{display:flex;justify-content:space-between;font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);font-weight:600;padding:8px 2px 5px;border-bottom:1px solid var(--border)}
+  .risk-list{display:flex;flex-direction:column;max-height:296px;overflow:auto}
+  .risk-row{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;padding:7px 2px;border-bottom:1px solid var(--grid)}
+  .risk-row span:first-child{color:var(--text-secondary)}
+  .risk-row .rb{font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-primary);flex:none}
+  .risk-more{font-size:12px;color:var(--muted);padding:9px 2px}
+  @media(max-width:900px){.risk-grid{grid-template-columns:1fr}}
+  .trends{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:8px 22px 18px}
+  .trend{font-size:14.5px;color:var(--text-secondary);line-height:1.65;padding:15px 0;border-top:1px solid var(--grid)}
+  .trend:first-child{border-top:none}
+  .trend b{color:var(--text-primary);font-weight:650}
+  .trend-caveat{font-size:12.5px;color:var(--muted);margin:15px 0 0;padding-top:13px;border-top:1px solid var(--grid);line-height:1.6}
+  .calc{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--sesame);
+    border-radius:10px;padding:16px 20px;margin-top:0}
+  .calc-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;
+    background:none;border:none;font-family:inherit;cursor:pointer;padding:0;text-align:left;
+    font-size:19px;font-weight:700;color:var(--text-primary);letter-spacing:-0.01em}
+  .calc-hint{display:inline-flex;align-items:center;gap:8px}
+  .calc-hint-txt{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:0}
+  .calc-car{color:var(--sesame);font-size:14px;transition:transform .2s ease}
+  .calc.open .calc-car{transform:rotate(180deg)}
+  .calc.open .calc-hint-txt{display:none}
+  .calc-body{display:none;margin-top:14px}
+  .calc.open .calc-body{display:block}
+  .calc h3{margin:0 0 7px;font-size:19px;color:var(--text-primary);font-weight:700;letter-spacing:-0.01em}
+  .calc .lead{font-size:13px;color:var(--text-secondary);margin:0 0 12px}
+  .calc .lead b{color:var(--text-primary)}
+  .calc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .calc-item{}
+  .calc-item .lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);font-weight:600;margin-bottom:5px}
+  .formula{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;color:var(--text-primary);
+    background:rgba(59,23,128,0.06);border:1px solid var(--border);border-radius:7px;padding:8px 10px;line-height:1.5}
+  :root[data-theme="dark"] .formula{background:rgba(161,114,236,0.12)}
+  .formula .op{color:var(--sesame);font-weight:700}
+  .calc .eg{font-size:12.5px;color:var(--text-secondary);margin:12px 0 0;padding-top:11px;border-top:1px solid var(--grid)}
+  .calc .eg b{color:var(--text-primary)}
+  .calc .eg code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--sesame);font-weight:600}
+  .calc-item .mini{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.4}
+  .statlist{margin-top:14px;padding-top:13px;border-top:1px solid var(--grid);display:grid;grid-template-columns:1fr 1fr;gap:8px 22px}
+  .statlist > div{font-size:12.5px;color:var(--text-secondary);line-height:1.45;padding-left:16px;position:relative}
+  .statlist > div b{color:var(--text-primary)}
+  .statlist .sdot{position:absolute;left:0;top:6px;width:9px;height:9px;border-radius:50%}
+  @media(max-width:900px){.statlist{grid-template-columns:1fr}}
+  .modebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 0 0}
+  .modebar-lbl{font-size:12.5px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em}
+  .seg-ctl{display:inline-flex;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:3px}
+  .seg-ctl button{border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-secondary);
+    padding:6px 15px;border-radius:6px;cursor:pointer;white-space:nowrap}
+  .seg-ctl button.on{background:var(--sesame);color:var(--sesame-ink)}
+  .modebar-or{font-size:11.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .alt-group{display:inline-flex;align-items:center;gap:8px;padding:5px 10px 5px 12px;border:1px dashed var(--border);border-radius:11px;background:rgba(59,23,128,0.03)}
+  :root[data-theme="dark"] .alt-group{background:rgba(161,114,236,0.06)}
+  .alt-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:700}
+  .seg-alt{border-color:var(--sesame)}
+  .seg-alt button.on{background:var(--sesame);color:var(--sesame-ink)}
+  .modebar-note{font-size:12px;color:var(--muted);margin:8px 0 0}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:1fr}.calc-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandbar">
+    <div class="brand">
+      <span class="wordmark">sesame</span>
+      <span class="brand-div"></span>
+      <span class="brand-tag">Provider Success</span>
+    </div>
+    <div class="brand-actions">
+      <button class="btn-csv" id="csvBtn" title="Download the raw dataset as CSV">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+        Download CSV
+      </button>
+      <button class="toggle" id="themeBtn">Dark mode</button>
+    </div>
+  </div>
+  <header class="top">
+    <div>
+      <h1>Sesame Provider Success — Where supply is stretched vs. slack</h1>
+      <p class="sub">Last month's bookings vs. currently active clinicians, across 51 states &times; 6 service lines (306 segments). Choose how supply is scored using the control below &mdash; by a flat bookings-per-provider target (10, 15, or 18), or by the per-service-line alternative method &mdash; and the whole dashboard updates.</p>
+    </div>
+  </header>
+
+  <div class="modebar">
+    <span class="modebar-lbl">Load Index target</span>
+    <div class="seg-ctl" id="flatToggle">
+      <button data-flat="10" class="on">10 bookings per provider</button>
+      <button data-flat="15">15 bookings per provider</button>
+      <button data-flat="18">18 bookings per provider</button>
+    </div>
+    <span class="modebar-or">&mdash;&nbsp;or&nbsp;&mdash;</span>
+    <div class="alt-group">
+      <span class="alt-lbl">Alternative method</span>
+      <div class="seg-ctl seg-alt" id="svcToggle">
+        <button data-mode="service">Per service line</button>
+      </div>
+    </div>
+  </div>
+  <p class="modebar-note" id="modeNote"></p>
+
+  <section>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section>
+    <div class="calc" id="calcBox">
+      <button class="calc-toggle" id="calcToggle" aria-expanded="false">
+        <span>How the Load Index is calculated</span>
+        <span class="calc-hint"><span class="calc-hint-txt">Show formulas &amp; definitions</span><span class="calc-car">&#9662;</span></span>
+      </button>
+      <div class="calc-body" id="calcBody"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Where to recruit now — top 3 by unmet demand</h2>
+    <div class="cards" id="recruitCards"></div>
+    <p class="mention" id="mentions"></p>
+  </section>
+
+  <section>
+    <h2>Where we look over-supplied</h2>
+    <div class="cards" id="overCards"></div>
+  </section>
+
+  <section>
+    <h2>Load heatmap — every state &times; service</h2>
+    <div class="hm-wrap">
+      <table class="hm" id="heatmap"></table>
+    </div>
+    <div class="legend">
+      <span>Slack</span>
+      <div class="scale" id="legendScale"></div>
+      <span>Balanced</span>
+      <div class="scale" id="legendScale2"></div>
+      <span>Stretched</span>
+      <span style="margin-left:8px;color:var(--muted)">Number = bookings per provider &divide; benchmark. Hover a cell for detail.</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Load heatmap — by region</h2>
+    <div class="hm-wrap">
+      <table class="hm rhm" id="rheatmap"></table>
+    </div>
+    <p class="foot" style="margin-top:12px">Six Census-style regions. Cell = region-wide bookings per provider &divide; 10. Hover for bookings, providers, and provider gap. Regions ordered left-to-right by total provider shortfall.</p>
+  </section>
+
+  <section>
+    <h2>Risks — coverage gaps &amp; fragile markets</h2>
+    <div class="risk-grid">
+      <div class="risk-panel" id="ncPanel"></div>
+      <div class="risk-panel" id="spPanel"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Trends — what stands out by geography &amp; service</h2>
+    <div class="trends">
+      <div class="trend"><b>Weight Loss is the engine — and it's the most stretched.</b> Success by Sesame is the single largest line at <b>31% of all bookings</b> (4,988), and it's consistently short of providers across states. Demand for GLP-1/weight-loss care is outrunning supply faster than anywhere else, which is why the top of every recruiting list is a weight-loss segment.</div>
+      <div class="trend"><b>Two supply regimes by service line.</b> High-throughput, async-friendly care runs hot — <b>Fertility (18.7 bookings/provider), Everyday Rx (17.6), and Weight Loss (16.7)</b> are thin on providers everywhere. Relational, recurring care is the opposite: <b>Mental Health holds the most providers of any line (324, ~29% of all supply)</b> against only moderate demand, making it the one line near balance — and the only place we see real slack.</div>
+      <div class="trend"><b>The Sun Belt is where demand has outrun supply.</b> California looks comparatively healthy (1.2&times; load on a deep bench of 153 providers), while the fast-growing Sun Belt — <b>TX, FL, GA, AZ, NC — runs 1.65&times;</b>. Supply has clustered in established coastal markets and hasn't kept pace with newer, high-growth demand in the South.</div>
+      <div class="trend"><b>Fertility is a structural specialist-scarcity problem.</b> It carries the highest load per provider (18.7) on the thinnest bench in the marketplace: <b>32 of 51 states have one or zero fertility providers</b>, and five states have live bookings with none at all. It's the hardest line to recruit for and the easiest to leave uncovered.</div>
+      <div class="trend"><b>Demand is concentrated; the coverage gaps sit in the long tail.</b> The <b>top 10 states drive 54% of bookings</b>, so raw shortfall follows population (the Southeast carries the largest absolute gap). But the <b>19 "no-coverage" segments</b> — live demand with zero providers — cluster in small states and low-volume women's-health lines (Women's Health, Fertility, PCOS). That's a small-market access problem, not a volume one.</div>
+      <div class="trend"><b>Low-volume women's-health lines are fragile, not just small.</b> Women's Health and PCOS run on one or two providers per state, so the absolute gaps look minor — but coverage is one departure away from zero in dozens of markets. Worth watching even though they never top a volume-ranked list.</div>
+      <p class="trend-caveat">Caveat: this is one month of synthetic data, and figures reflect the currently selected Load Index target (defaults to a flat 10), which inflates apparent under-supply. Treat magnitudes as directional and the patterns as the takeaway.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Full ranked table</h2>
+    <div class="controls">
+      <div class="ms" id="msRegion"></div>
+      <input type="text" id="search" placeholder="Search state (e.g. TX)…">
+      <div class="ms" id="msSvc"></div>
+      <div class="ms" id="msStatus"></div>
+      <span class="foot" id="rowcount"></span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="data" id="dtable">
+        <thead><tr>
+          <th data-k="state">State</th>
+          <th data-k="region">Region</th>
+          <th data-k="service_line">Service line</th>
+          <th class="num" data-k="bookings_last_month">Bookings</th>
+          <th class="num" data-k="active_providers">Providers</th>
+          <th class="num" data-k="bpp">Bookings / provider</th>
+          <th class="num" data-k="load_index">Load index</th>
+          <th class="num" data-k="gap">Provider gap</th>
+          <th data-k="status">Status</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="foot">Provider gap = providers needed to bring the segment to the active target, minus providers on hand. Positive = recruit; negative = slack. All figures recompute with the target toggle at the top.</p>
+  </section>
+
+  <section>
+    <h2>Methods, More Ideas &amp; Caveats</h2>
+    <div class="method">
+      <h4 class="method-sub">Method</h4>
+      <b>Two ways to set the target (toggle at top).</b> The <b>flat target</b> holds every service line to the same bar — pick 10, 15, or 18 bookings per provider per month. It's simple, but it judges a fertility visit and a weight-loss refill at the same throughput, so the count of under-supplied segments depends heavily on where you set the bar (~525 providers short at 10, far fewer at 18). The separate <b>per-service-line</b> method instead scores each line against its own typical throughput (median bookings per provider: Everyday Rx 16.5, Mental Health 13, Weight Loss 15, Women's Health 11, Fertility 16.25, PCOS 9), which normalizes across services and puts the total shortfall around ~141. TX Weight Loss leads under every setting, so the headline is robust; the flat views are simpler screens and the service-line view the more like-for-like one.<br><br>
+      <b>On the service-line target.</b> Using each line's median is transparent but imperfect: if the whole marketplace is under-supplied, the median is itself somewhat stretched, so it can understate true capacity. A stronger version would anchor to the throughput of well-supplied markets, or better, to provider utilization if we had it.
+
+      <h4 class="method-sub">More ideas — where I'd take this next</h4>
+      <b>Measure the patient-felt gap.</b> The load index is a <i>floor</i>, not the true gap, because bookings are censored (see caveats). The single highest-value new input would be <b>time-to-first-available-appointment or abandoned-search data</b> — it's censoring-aware and it's what patients actually experience. I'd anchor the system on that and keep the ratio as a secondary check.<br><br>
+      <b>Chase acceleration, not just level.</b> One month can't separate a growing gap from noise. Month-over-month growth per segment would prioritize where demand is <i>rising</i> — a segment at 1.3&times; growing 30%/mo is more urgent than a static 1.8&times;.<br><br>
+      <b>Recruitability-adjusted priority.</b> Rank by <b>gap &divide; effort-to-fill</b>, not gap alone — a weight-loss NP is fast to recruit and credential; a fertility specialist is slow and scarce. This would reorder the recruiting list toward best ROI on PS effort.<br><br>
+      <b>Redistribution before recruitment.</b> Over-supply (e.g. CA mental health, ~7 bookings per provider) is a <b>retention risk</b> as much as waste — starved providers churn. Cross-listing idle multi-state providers into stretched states is faster and cheaper than net-new supply.<br><br>
+      <b>Weight by revenue.</b> A gap in weight-loss/GLP-1 or fertility is worth more per fill than Everyday Rx, so a "dollars-at-risk" priority would follow value, not just volume (needs real cash prices to wire in).<br><br>
+      <b>Reconsider the North Star.</b> The load index proxies two things it doesn't measure directly — unmet demand and provider retention. A sharper pair would be <b>time-to-appointment</b> (demand side) plus <b>provider utilization</b> (supply side). Two corollaries: "over-supplied" should mean below a <i>viability floor</i>, not just below the median (some slack is healthy — it gives patients choice and buffers churn); and because more supply improves availability and converts more bookings, "recruit to target" probably <i>undershoots</i>.
+
+      <h4 class="method-sub">Caveats</h4>
+      <b>Read the gap as a floor, not a ceiling.</b> Bookings are <i>realized</i> demand. In under-supplied segments some patients never booked because no one was available, so true demand — and the real gap — is likely larger than shown. Segments with 0 providers but live bookings are flagged "No coverage."<br><br>
+      <b>Assumptions &amp; data limits.</b> Every active provider is treated as equally available (no utilization or hours data, so headcount may overstate real capacity); bookings are a proxy for demand and aren't unique patients (async refills may inflate weight-loss volume); one month is treated as steady state (no seasonality or trend); and this is synthetic data built for the exercise. Not in the dataset but valuable next: utilization, wait times, price/revenue, churn/ratings, and multi-state licensing.
+    </div>
+  </section>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+const DATA = [{"state":"CA","service_line":"Everyday Rx","bookings_last_month":372,"active_providers":17,"bpp":21.9,"target_bpp":10.0,"providers_needed":37.2,"gap":20.2,"load_index":2.19,"status":"Under-supplied","region":"Pacific"},{"state":"CA","service_line":"Mental Health Rx","bookings_last_month":410,"active_providers":62,"bpp":6.6,"target_bpp":10.0,"providers_needed":41.0,"gap":-21.0,"load_index":0.66,"status":"Over-supplied","region":"Pacific"},{"state":"CA","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":605,"active_providers":45,"bpp":13.4,"target_bpp":10.0,"providers_needed":60.5,"gap":15.5,"load_index":1.34,"status":"Under-supplied","region":"Pacific"},{"state":"CA","service_line":"Women's Health","bookings_last_month":171,"active_providers":14,"bpp":12.2,"target_bpp":10.0,"providers_needed":17.1,"gap":3.1,"load_index":1.22,"status":"Under-supplied","region":"Pacific"},{"state":"CA","service_line":"PCOS","bookings_last_month":97,"active_providers":9,"bpp":10.8,"target_bpp":10.0,"providers_needed":9.7,"gap":0.7,"load_index":1.08,"status":"Balanced","region":"Pacific"},{"state":"CA","service_line":"Fertility","bookings_last_month":175,"active_providers":6,"bpp":29.2,"target_bpp":10.0,"providers_needed":17.5,"gap":11.5,"load_index":2.92,"status":"Under-supplied","region":"Pacific"},{"state":"TX","service_line":"Everyday Rx","bookings_last_month":287,"active_providers":17,"bpp":16.9,"target_bpp":10.0,"providers_needed":28.7,"gap":11.7,"load_index":1.69,"status":"Under-supplied","region":"South Central"},{"state":"TX","service_line":"Mental Health Rx","bookings_last_month":307,"active_providers":23,"bpp":13.3,"target_bpp":10.0,"providers_needed":30.7,"gap":7.7,"load_index":1.33,"status":"Under-supplied","region":"South Central"},{"state":"TX","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":491,"active_providers":14,"bpp":35.1,"target_bpp":10.0,"providers_needed":49.1,"gap":35.1,"load_index":3.51,"status":"Under-supplied","region":"South Central"},{"state":"TX","service_line":"Women's Health","bookings_last_month":176,"active_providers":14,"bpp":12.6,"target_bpp":10.0,"providers_needed":17.6,"gap":3.6,"load_index":1.26,"status":"Under-supplied","region":"South Central"},{"state":"TX","service_line":"PCOS","bookings_last_month":80,"active_providers":10,"bpp":8.0,"target_bpp":10.0,"providers_needed":8.0,"gap":-2.0,"load_index":0.8,"status":"Over-supplied","region":"South Central"},{"state":"TX","service_line":"Fertility","bookings_last_month":125,"active_providers":4,"bpp":31.2,"target_bpp":10.0,"providers_needed":12.5,"gap":8.5,"load_index":3.12,"status":"Under-supplied","region":"South Central"},{"state":"FL","service_line":"Everyday Rx","bookings_last_month":234,"active_providers":14,"bpp":16.7,"target_bpp":10.0,"providers_needed":23.4,"gap":9.4,"load_index":1.67,"status":"Under-supplied","region":"Southeast"},{"state":"FL","service_line":"Mental Health Rx","bookings_last_month":300,"active_providers":24,"bpp":12.5,"target_bpp":10.0,"providers_needed":30.0,"gap":6.0,"load_index":1.25,"status":"Under-supplied","region":"Southeast"},{"state":"FL","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":330,"active_providers":12,"bpp":27.5,"target_bpp":10.0,"providers_needed":33.0,"gap":21.0,"load_index":2.75,"status":"Under-supplied","region":"Southeast"},{"state":"FL","service_line":"Women's Health","bookings_last_month":124,"active_providers":12,"bpp":10.3,"target_bpp":10.0,"providers_needed":12.4,"gap":0.4,"load_index":1.03,"status":"Balanced","region":"Southeast"},{"state":"FL","service_line":"PCOS","bookings_last_month":74,"active_providers":9,"bpp":8.2,"target_bpp":10.0,"providers_needed":7.4,"gap":-1.6,"load_index":0.82,"status":"Over-supplied","region":"Southeast"},{"state":"FL","service_line":"Fertility","bookings_last_month":105,"active_providers":5,"bpp":21.0,"target_bpp":10.0,"providers_needed":10.5,"gap":5.5,"load_index":2.1,"status":"Under-supplied","region":"Southeast"},{"state":"NY","service_line":"Everyday Rx","bookings_last_month":155,"active_providers":8,"bpp":19.4,"target_bpp":10.0,"providers_needed":15.5,"gap":7.5,"load_index":1.94,"status":"Under-supplied","region":"Northeast"},{"state":"NY","service_line":"Mental Health Rx","bookings_last_month":186,"active_providers":23,"bpp":8.1,"target_bpp":10.0,"providers_needed":18.6,"gap":-4.4,"load_index":0.81,"status":"Over-supplied","region":"Northeast"},{"state":"NY","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":254,"active_providers":17,"bpp":14.9,"target_bpp":10.0,"providers_needed":25.4,"gap":8.4,"load_index":1.49,"status":"Under-supplied","region":"Northeast"},{"state":"NY","service_line":"Women's Health","bookings_last_month":99,"active_providers":8,"bpp":12.4,"target_bpp":10.0,"providers_needed":9.9,"gap":1.9,"load_index":1.24,"status":"Under-supplied","region":"Northeast"},{"state":"NY","service_line":"PCOS","bookings_last_month":53,"active_providers":5,"bpp":10.6,"target_bpp":10.0,"providers_needed":5.3,"gap":0.3,"load_index":1.06,"status":"Balanced","region":"Northeast"},{"state":"NY","service_line":"Fertility","bookings_last_month":105,"active_providers":7,"bpp":15.0,"target_bpp":10.0,"providers_needed":10.5,"gap":3.5,"load_index":1.5,"status":"Under-supplied","region":"Northeast"},{"state":"PA","service_line":"Everyday Rx","bookings_last_month":99,"active_providers":6,"bpp":16.5,"target_bpp":10.0,"providers_needed":9.9,"gap":3.9,"load_index":1.65,"status":"Under-supplied","region":"Northeast"},{"state":"PA","service_line":"Mental Health Rx","bookings_last_month":129,"active_providers":9,"bpp":14.3,"target_bpp":10.0,"providers_needed":12.9,"gap":3.9,"load_index":1.43,"status":"Under-supplied","region":"Northeast"},{"state":"PA","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":227,"active_providers":15,"bpp":15.1,"target_bpp":10.0,"providers_needed":22.7,"gap":7.7,"load_index":1.51,"status":"Under-supplied","region":"Northeast"},{"state":"PA","service_line":"Women's Health","bookings_last_month":71,"active_providers":7,"bpp":10.1,"target_bpp":10.0,"providers_needed":7.1,"gap":0.1,"load_index":1.01,"status":"Balanced","region":"Northeast"},{"state":"PA","service_line":"PCOS","bookings_last_month":47,"active_providers":5,"bpp":9.4,"target_bpp":10.0,"providers_needed":4.7,"gap":-0.3,"load_index":0.94,"status":"Balanced","region":"Northeast"},{"state":"PA","service_line":"Fertility","bookings_last_month":51,"active_providers":2,"bpp":25.5,"target_bpp":10.0,"providers_needed":5.1,"gap":3.1,"load_index":2.55,"status":"Under-supplied","region":"Northeast"},{"state":"IL","service_line":"Everyday Rx","bookings_last_month":101,"active_providers":5,"bpp":20.2,"target_bpp":10.0,"providers_needed":10.1,"gap":5.1,"load_index":2.02,"status":"Under-supplied","region":"Midwest"},{"state":"IL","service_line":"Mental Health Rx","bookings_last_month":176,"active_providers":15,"bpp":11.7,"target_bpp":10.0,"providers_needed":17.6,"gap":2.6,"load_index":1.17,"status":"Under-supplied","region":"Midwest"},{"state":"IL","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":166,"active_providers":11,"bpp":15.1,"target_bpp":10.0,"providers_needed":16.6,"gap":5.6,"load_index":1.51,"status":"Under-supplied","region":"Midwest"},{"state":"IL","service_line":"Women's Health","bookings_last_month":64,"active_providers":6,"bpp":10.7,"target_bpp":10.0,"providers_needed":6.4,"gap":0.4,"load_index":1.07,"status":"Balanced","region":"Midwest"},{"state":"IL","service_line":"PCOS","bookings_last_month":38,"active_providers":3,"bpp":12.7,"target_bpp":10.0,"providers_needed":3.8,"gap":0.8,"load_index":1.27,"status":"Balanced","region":"Midwest"},{"state":"IL","service_line":"Fertility","bookings_last_month":50,"active_providers":2,"bpp":25.0,"target_bpp":10.0,"providers_needed":5.0,"gap":3.0,"load_index":2.5,"status":"Under-supplied","region":"Midwest"},{"state":"OH","service_line":"Everyday Rx","bookings_last_month":110,"active_providers":7,"bpp":15.7,"target_bpp":10.0,"providers_needed":11.0,"gap":4.0,"load_index":1.57,"status":"Under-supplied","region":"Midwest"},{"state":"OH","service_line":"Mental Health Rx","bookings_last_month":131,"active_providers":8,"bpp":16.4,"target_bpp":10.0,"providers_needed":13.1,"gap":5.1,"load_index":1.64,"status":"Under-supplied","region":"Midwest"},{"state":"OH","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":207,"active_providers":13,"bpp":15.9,"target_bpp":10.0,"providers_needed":20.7,"gap":7.7,"load_index":1.59,"status":"Under-supplied","region":"Midwest"},{"state":"OH","service_line":"Women's Health","bookings_last_month":52,"active_providers":4,"bpp":13.0,"target_bpp":10.0,"providers_needed":5.2,"gap":1.2,"load_index":1.3,"status":"Under-supplied","region":"Midwest"},{"state":"OH","service_line":"PCOS","bookings_last_month":30,"active_providers":3,"bpp":10.0,"target_bpp":10.0,"providers_needed":3.0,"gap":0.0,"load_index":1.0,"status":"Balanced","region":"Midwest"},{"state":"OH","service_line":"Fertility","bookings_last_month":59,"active_providers":2,"bpp":29.5,"target_bpp":10.0,"providers_needed":5.9,"gap":3.9,"load_index":2.95,"status":"Under-supplied","region":"Midwest"},{"state":"GA","service_line":"Everyday Rx","bookings_last_month":93,"active_providers":6,"bpp":15.5,"target_bpp":10.0,"providers_needed":9.3,"gap":3.3,"load_index":1.55,"status":"Under-supplied","region":"Southeast"},{"state":"GA","service_line":"Mental Health Rx","bookings_last_month":130,"active_providers":11,"bpp":11.8,"target_bpp":10.0,"providers_needed":13.0,"gap":2.0,"load_index":1.18,"status":"Under-supplied","region":"Southeast"},{"state":"GA","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":183,"active_providers":5,"bpp":36.6,"target_bpp":10.0,"providers_needed":18.3,"gap":13.3,"load_index":3.66,"status":"Under-supplied","region":"Southeast"},{"state":"GA","service_line":"Women's Health","bookings_last_month":64,"active_providers":6,"bpp":10.7,"target_bpp":10.0,"providers_needed":6.4,"gap":0.4,"load_index":1.07,"status":"Balanced","region":"Southeast"},{"state":"GA","service_line":"PCOS","bookings_last_month":31,"active_providers":3,"bpp":10.3,"target_bpp":10.0,"providers_needed":3.1,"gap":0.1,"load_index":1.03,"status":"Balanced","region":"Southeast"},{"state":"GA","service_line":"Fertility","bookings_last_month":40,"active_providers":2,"bpp":20.0,"target_bpp":10.0,"providers_needed":4.0,"gap":2.0,"load_index":2.0,"status":"Under-supplied","region":"Southeast"},{"state":"NC","service_line":"Everyday Rx","bookings_last_month":116,"active_providers":8,"bpp":14.5,"target_bpp":10.0,"providers_needed":11.6,"gap":3.6,"load_index":1.45,"status":"Under-supplied","region":"Southeast"},{"state":"NC","service_line":"Mental Health Rx","bookings_last_month":113,"active_providers":8,"bpp":14.1,"target_bpp":10.0,"providers_needed":11.3,"gap":3.3,"load_index":1.41,"status":"Under-supplied","region":"Southeast"},{"state":"NC","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":133,"active_providers":6,"bpp":22.2,"target_bpp":10.0,"providers_needed":13.3,"gap":7.3,"load_index":2.22,"status":"Under-supplied","region":"Southeast"},{"state":"NC","service_line":"Women's Health","bookings_last_month":53,"active_providers":5,"bpp":10.6,"target_bpp":10.0,"providers_needed":5.3,"gap":0.3,"load_index":1.06,"status":"Balanced","region":"Southeast"},{"state":"NC","service_line":"PCOS","bookings_last_month":35,"active_providers":3,"bpp":11.7,"target_bpp":10.0,"providers_needed":3.5,"gap":0.5,"load_index":1.17,"status":"Balanced","region":"Southeast"},{"state":"NC","service_line":"Fertility","bookings_last_month":54,"active_providers":3,"bpp":18.0,"target_bpp":10.0,"providers_needed":5.4,"gap":2.4,"load_index":1.8,"status":"Under-supplied","region":"Southeast"},{"state":"MI","service_line":"Everyday Rx","bookings_last_month":91,"active_providers":4,"bpp":22.8,"target_bpp":10.0,"providers_needed":9.1,"gap":5.1,"load_index":2.28,"status":"Under-supplied","region":"Midwest"},{"state":"MI","service_line":"Mental Health Rx","bookings_last_month":107,"active_providers":6,"bpp":17.8,"target_bpp":10.0,"providers_needed":10.7,"gap":4.7,"load_index":1.78,"status":"Under-supplied","region":"Midwest"},{"state":"MI","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":171,"active_providers":13,"bpp":13.2,"target_bpp":10.0,"providers_needed":17.1,"gap":4.1,"load_index":1.32,"status":"Under-supplied","region":"Midwest"},{"state":"MI","service_line":"Women's Health","bookings_last_month":61,"active_providers":5,"bpp":12.2,"target_bpp":10.0,"providers_needed":6.1,"gap":1.1,"load_index":1.22,"status":"Under-supplied","region":"Midwest"},{"state":"MI","service_line":"PCOS","bookings_last_month":25,"active_providers":3,"bpp":8.3,"target_bpp":10.0,"providers_needed":2.5,"gap":-0.5,"load_index":0.83,"status":"Balanced","region":"Midwest"},{"state":"MI","service_line":"Fertility","bookings_last_month":53,"active_providers":2,"bpp":26.5,"target_bpp":10.0,"providers_needed":5.3,"gap":3.3,"load_index":2.65,"status":"Under-supplied","region":"Midwest"},{"state":"NJ","service_line":"Everyday Rx","bookings_last_month":67,"active_providers":4,"bpp":16.8,"target_bpp":10.0,"providers_needed":6.7,"gap":2.7,"load_index":1.68,"status":"Under-supplied","region":"Northeast"},{"state":"NJ","service_line":"Mental Health Rx","bookings_last_month":121,"active_providers":7,"bpp":17.3,"target_bpp":10.0,"providers_needed":12.1,"gap":5.1,"load_index":1.73,"status":"Under-supplied","region":"Northeast"},{"state":"NJ","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":132,"active_providers":9,"bpp":14.7,"target_bpp":10.0,"providers_needed":13.2,"gap":4.2,"load_index":1.47,"status":"Under-supplied","region":"Northeast"},{"state":"NJ","service_line":"Women's Health","bookings_last_month":44,"active_providers":4,"bpp":11.0,"target_bpp":10.0,"providers_needed":4.4,"gap":0.4,"load_index":1.1,"status":"Balanced","region":"Northeast"},{"state":"NJ","service_line":"PCOS","bookings_last_month":28,"active_providers":3,"bpp":9.3,"target_bpp":10.0,"providers_needed":2.8,"gap":-0.2,"load_index":0.93,"status":"Balanced","region":"Northeast"},{"state":"NJ","service_line":"Fertility","bookings_last_month":42,"active_providers":2,"bpp":21.0,"target_bpp":10.0,"providers_needed":4.2,"gap":2.2,"load_index":2.1,"status":"Under-supplied","region":"Northeast"},{"state":"VA","service_line":"Everyday Rx","bookings_last_month":71,"active_providers":5,"bpp":14.2,"target_bpp":10.0,"providers_needed":7.1,"gap":2.1,"load_index":1.42,"status":"Under-supplied","region":"Southeast"},{"state":"VA","service_line":"Mental Health Rx","bookings_last_month":108,"active_providers":8,"bpp":13.5,"target_bpp":10.0,"providers_needed":10.8,"gap":2.8,"load_index":1.35,"status":"Under-supplied","region":"Southeast"},{"state":"VA","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":126,"active_providers":7,"bpp":18.0,"target_bpp":10.0,"providers_needed":12.6,"gap":5.6,"load_index":1.8,"status":"Under-supplied","region":"Southeast"},{"state":"VA","service_line":"Women's Health","bookings_last_month":41,"active_providers":3,"bpp":13.7,"target_bpp":10.0,"providers_needed":4.1,"gap":1.1,"load_index":1.37,"status":"Under-supplied","region":"Southeast"},{"state":"VA","service_line":"PCOS","bookings_last_month":28,"active_providers":3,"bpp":9.3,"target_bpp":10.0,"providers_needed":2.8,"gap":-0.2,"load_index":0.93,"status":"Balanced","region":"Southeast"},{"state":"VA","service_line":"Fertility","bookings_last_month":34,"active_providers":2,"bpp":17.0,"target_bpp":10.0,"providers_needed":3.4,"gap":1.4,"load_index":1.7,"status":"Under-supplied","region":"Southeast"},{"state":"WA","service_line":"Everyday Rx","bookings_last_month":61,"active_providers":4,"bpp":15.2,"target_bpp":10.0,"providers_needed":6.1,"gap":2.1,"load_index":1.52,"status":"Under-supplied","region":"Pacific"},{"state":"WA","service_line":"Mental Health Rx","bookings_last_month":105,"active_providers":6,"bpp":17.5,"target_bpp":10.0,"providers_needed":10.5,"gap":4.5,"load_index":1.75,"status":"Under-supplied","region":"Pacific"},{"state":"WA","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":99,"active_providers":7,"bpp":14.1,"target_bpp":10.0,"providers_needed":9.9,"gap":2.9,"load_index":1.41,"status":"Under-supplied","region":"Pacific"},{"state":"WA","service_line":"Women's Health","bookings_last_month":36,"active_providers":3,"bpp":12.0,"target_bpp":10.0,"providers_needed":3.6,"gap":0.6,"load_index":1.2,"status":"Balanced","region":"Pacific"},{"state":"WA","service_line":"PCOS","bookings_last_month":29,"active_providers":3,"bpp":9.7,"target_bpp":10.0,"providers_needed":2.9,"gap":-0.1,"load_index":0.97,"status":"Balanced","region":"Pacific"},{"state":"WA","service_line":"Fertility","bookings_last_month":34,"active_providers":2,"bpp":17.0,"target_bpp":10.0,"providers_needed":3.4,"gap":1.4,"load_index":1.7,"status":"Under-supplied","region":"Pacific"},{"state":"AZ","service_line":"Everyday Rx","bookings_last_month":57,"active_providers":3,"bpp":19.0,"target_bpp":10.0,"providers_needed":5.7,"gap":2.7,"load_index":1.9,"status":"Under-supplied","region":"Mountain/SW"},{"state":"AZ","service_line":"Mental Health Rx","bookings_last_month":83,"active_providers":6,"bpp":13.8,"target_bpp":10.0,"providers_needed":8.3,"gap":2.3,"load_index":1.38,"status":"Under-supplied","region":"Mountain/SW"},{"state":"AZ","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":104,"active_providers":4,"bpp":26.0,"target_bpp":10.0,"providers_needed":10.4,"gap":6.4,"load_index":2.6,"status":"Under-supplied","region":"Mountain/SW"},{"state":"AZ","service_line":"Women's Health","bookings_last_month":48,"active_providers":3,"bpp":16.0,"target_bpp":10.0,"providers_needed":4.8,"gap":1.8,"load_index":1.6,"status":"Under-supplied","region":"Mountain/SW"},{"state":"AZ","service_line":"PCOS","bookings_last_month":22,"active_providers":2,"bpp":11.0,"target_bpp":10.0,"providers_needed":2.2,"gap":0.2,"load_index":1.1,"status":"Balanced","region":"Mountain/SW"},{"state":"AZ","service_line":"Fertility","bookings_last_month":38,"active_providers":2,"bpp":19.0,"target_bpp":10.0,"providers_needed":3.8,"gap":1.8,"load_index":1.9,"status":"Under-supplied","region":"Mountain/SW"},{"state":"TN","service_line":"Everyday Rx","bookings_last_month":62,"active_providers":3,"bpp":20.7,"target_bpp":10.0,"providers_needed":6.2,"gap":3.2,"load_index":2.07,"status":"Under-supplied","region":"Southeast"},{"state":"TN","service_line":"Mental Health Rx","bookings_last_month":74,"active_providers":5,"bpp":14.8,"target_bpp":10.0,"providers_needed":7.4,"gap":2.4,"load_index":1.48,"status":"Under-supplied","region":"Southeast"},{"state":"TN","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":121,"active_providers":8,"bpp":15.1,"target_bpp":10.0,"providers_needed":12.1,"gap":4.1,"load_index":1.51,"status":"Under-supplied","region":"Southeast"},{"state":"TN","service_line":"Women's Health","bookings_last_month":44,"active_providers":4,"bpp":11.0,"target_bpp":10.0,"providers_needed":4.4,"gap":0.4,"load_index":1.1,"status":"Balanced","region":"Southeast"},{"state":"TN","service_line":"PCOS","bookings_last_month":17,"active_providers":2,"bpp":8.5,"target_bpp":10.0,"providers_needed":1.7,"gap":-0.3,"load_index":0.85,"status":"Balanced","region":"Southeast"},{"state":"TN","service_line":"Fertility","bookings_last_month":36,"active_providers":3,"bpp":12.0,"target_bpp":10.0,"providers_needed":3.6,"gap":0.6,"load_index":1.2,"status":"Balanced","region":"Southeast"},{"state":"MA","service_line":"Everyday Rx","bookings_last_month":72,"active_providers":3,"bpp":24.0,"target_bpp":10.0,"providers_needed":7.2,"gap":4.2,"load_index":2.4,"status":"Under-supplied","region":"Northeast"},{"state":"MA","service_line":"Mental Health Rx","bookings_last_month":81,"active_providers":11,"bpp":7.4,"target_bpp":10.0,"providers_needed":8.1,"gap":-2.9,"load_index":0.74,"status":"Over-supplied","region":"Northeast"},{"state":"MA","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":81,"active_providers":5,"bpp":16.2,"target_bpp":10.0,"providers_needed":8.1,"gap":3.1,"load_index":1.62,"status":"Under-supplied","region":"Northeast"},{"state":"MA","service_line":"Women's Health","bookings_last_month":45,"active_providers":3,"bpp":15.0,"target_bpp":10.0,"providers_needed":4.5,"gap":1.5,"load_index":1.5,"status":"Under-supplied","region":"Northeast"},{"state":"MA","service_line":"PCOS","bookings_last_month":24,"active_providers":2,"bpp":12.0,"target_bpp":10.0,"providers_needed":2.4,"gap":0.4,"load_index":1.2,"status":"Balanced","region":"Northeast"},{"state":"MA","service_line":"Fertility","bookings_last_month":30,"active_providers":2,"bpp":15.0,"target_bpp":10.0,"providers_needed":3.0,"gap":1.0,"load_index":1.5,"status":"Under-supplied","region":"Northeast"},{"state":"IN","service_line":"Everyday Rx","bookings_last_month":63,"active_providers":4,"bpp":15.8,"target_bpp":10.0,"providers_needed":6.3,"gap":2.3,"load_index":1.58,"status":"Under-supplied","region":"Midwest"},{"state":"IN","service_line":"Mental Health Rx","bookings_last_month":68,"active_providers":5,"bpp":13.6,"target_bpp":10.0,"providers_needed":6.8,"gap":1.8,"load_index":1.36,"status":"Under-supplied","region":"Midwest"},{"state":"IN","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":120,"active_providers":8,"bpp":15.0,"target_bpp":10.0,"providers_needed":12.0,"gap":4.0,"load_index":1.5,"status":"Under-supplied","region":"Midwest"},{"state":"IN","service_line":"Women's Health","bookings_last_month":37,"active_providers":4,"bpp":9.2,"target_bpp":10.0,"providers_needed":3.7,"gap":-0.3,"load_index":0.92,"status":"Balanced","region":"Midwest"},{"state":"IN","service_line":"PCOS","bookings_last_month":17,"active_providers":2,"bpp":8.5,"target_bpp":10.0,"providers_needed":1.7,"gap":-0.3,"load_index":0.85,"status":"Balanced","region":"Midwest"},{"state":"IN","service_line":"Fertility","bookings_last_month":31,"active_providers":2,"bpp":15.5,"target_bpp":10.0,"providers_needed":3.1,"gap":1.1,"load_index":1.55,"status":"Under-supplied","region":"Midwest"},{"state":"MO","service_line":"Everyday Rx","bookings_last_month":67,"active_providers":3,"bpp":22.3,"target_bpp":10.0,"providers_needed":6.7,"gap":3.7,"load_index":2.23,"status":"Under-supplied","region":"Midwest"},{"state":"MO","service_line":"Mental Health Rx","bookings_last_month":62,"active_providers":5,"bpp":12.4,"target_bpp":10.0,"providers_needed":6.2,"gap":1.2,"load_index":1.24,"status":"Under-supplied","region":"Midwest"},{"state":"MO","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":96,"active_providers":5,"bpp":19.2,"target_bpp":10.0,"providers_needed":9.6,"gap":4.6,"load_index":1.92,"status":"Under-supplied","region":"Midwest"},{"state":"MO","service_line":"Women's Health","bookings_last_month":27,"active_providers":3,"bpp":9.0,"target_bpp":10.0,"providers_needed":2.7,"gap":-0.3,"load_index":0.9,"status":"Balanced","region":"Midwest"},{"state":"MO","service_line":"PCOS","bookings_last_month":17,"active_providers":2,"bpp":8.5,"target_bpp":10.0,"providers_needed":1.7,"gap":-0.3,"load_index":0.85,"status":"Balanced","region":"Midwest"},{"state":"MO","service_line":"Fertility","bookings_last_month":29,"active_providers":1,"bpp":29.0,"target_bpp":10.0,"providers_needed":2.9,"gap":1.9,"load_index":2.9,"status":"Under-supplied","region":"Midwest"},{"state":"MD","service_line":"Everyday Rx","bookings_last_month":56,"active_providers":4,"bpp":14.0,"target_bpp":10.0,"providers_needed":5.6,"gap":1.6,"load_index":1.4,"status":"Under-supplied","region":"Southeast"},{"state":"MD","service_line":"Mental Health Rx","bookings_last_month":63,"active_providers":5,"bpp":12.6,"target_bpp":10.0,"providers_needed":6.3,"gap":1.3,"load_index":1.26,"status":"Under-supplied","region":"Southeast"},{"state":"MD","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":78,"active_providers":5,"bpp":15.6,"target_bpp":10.0,"providers_needed":7.8,"gap":2.8,"load_index":1.56,"status":"Under-supplied","region":"Southeast"},{"state":"MD","service_line":"Women's Health","bookings_last_month":36,"active_providers":3,"bpp":12.0,"target_bpp":10.0,"providers_needed":3.6,"gap":0.6,"load_index":1.2,"status":"Balanced","region":"Southeast"},{"state":"MD","service_line":"PCOS","bookings_last_month":17,"active_providers":2,"bpp":8.5,"target_bpp":10.0,"providers_needed":1.7,"gap":-0.3,"load_index":0.85,"status":"Balanced","region":"Southeast"},{"state":"MD","service_line":"Fertility","bookings_last_month":22,"active_providers":1,"bpp":22.0,"target_bpp":10.0,"providers_needed":2.2,"gap":1.2,"load_index":2.2,"status":"Under-supplied","region":"Southeast"},{"state":"WI","service_line":"Everyday Rx","bookings_last_month":64,"active_providers":3,"bpp":21.3,"target_bpp":10.0,"providers_needed":6.4,"gap":3.4,"load_index":2.13,"status":"Under-supplied","region":"Midwest"},{"state":"WI","service_line":"Mental Health Rx","bookings_last_month":60,"active_providers":4,"bpp":15.0,"target_bpp":10.0,"providers_needed":6.0,"gap":2.0,"load_index":1.5,"status":"Under-supplied","region":"Midwest"},{"state":"WI","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":101,"active_providers":8,"bpp":12.6,"target_bpp":10.0,"providers_needed":10.1,"gap":2.1,"load_index":1.26,"status":"Under-supplied","region":"Midwest"},{"state":"WI","service_line":"Women's Health","bookings_last_month":37,"active_providers":3,"bpp":12.3,"target_bpp":10.0,"providers_needed":3.7,"gap":0.7,"load_index":1.23,"status":"Balanced","region":"Midwest"},{"state":"WI","service_line":"PCOS","bookings_last_month":15,"active_providers":2,"bpp":7.5,"target_bpp":10.0,"providers_needed":1.5,"gap":-0.5,"load_index":0.75,"status":"Balanced","region":"Midwest"},{"state":"WI","service_line":"Fertility","bookings_last_month":28,"active_providers":2,"bpp":14.0,"target_bpp":10.0,"providers_needed":2.8,"gap":0.8,"load_index":1.4,"status":"Balanced","region":"Midwest"},{"state":"CO","service_line":"Everyday Rx","bookings_last_month":56,"active_providers":2,"bpp":28.0,"target_bpp":10.0,"providers_needed":5.6,"gap":3.6,"load_index":2.8,"status":"Under-supplied","region":"Mountain/SW"},{"state":"CO","service_line":"Mental Health Rx","bookings_last_month":78,"active_providers":5,"bpp":15.6,"target_bpp":10.0,"providers_needed":7.8,"gap":2.8,"load_index":1.56,"status":"Under-supplied","region":"Mountain/SW"},{"state":"CO","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":91,"active_providers":7,"bpp":13.0,"target_bpp":10.0,"providers_needed":9.1,"gap":2.1,"load_index":1.3,"status":"Under-supplied","region":"Mountain/SW"},{"state":"CO","service_line":"Women's Health","bookings_last_month":26,"active_providers":2,"bpp":13.0,"target_bpp":10.0,"providers_needed":2.6,"gap":0.6,"load_index":1.3,"status":"Balanced","region":"Mountain/SW"},{"state":"CO","service_line":"PCOS","bookings_last_month":15,"active_providers":2,"bpp":7.5,"target_bpp":10.0,"providers_needed":1.5,"gap":-0.5,"load_index":0.75,"status":"Balanced","region":"Mountain/SW"},{"state":"CO","service_line":"Fertility","bookings_last_month":23,"active_providers":2,"bpp":11.5,"target_bpp":10.0,"providers_needed":2.3,"gap":0.3,"load_index":1.15,"status":"Balanced","region":"Mountain/SW"},{"state":"MN","service_line":"Everyday Rx","bookings_last_month":44,"active_providers":3,"bpp":14.7,"target_bpp":10.0,"providers_needed":4.4,"gap":1.4,"load_index":1.47,"status":"Under-supplied","region":"Midwest"},{"state":"MN","service_line":"Mental Health Rx","bookings_last_month":59,"active_providers":4,"bpp":14.8,"target_bpp":10.0,"providers_needed":5.9,"gap":1.9,"load_index":1.48,"status":"Under-supplied","region":"Midwest"},{"state":"MN","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":96,"active_providers":7,"bpp":13.7,"target_bpp":10.0,"providers_needed":9.6,"gap":2.6,"load_index":1.37,"status":"Under-supplied","region":"Midwest"},{"state":"MN","service_line":"Women's Health","bookings_last_month":25,"active_providers":2,"bpp":12.5,"target_bpp":10.0,"providers_needed":2.5,"gap":0.5,"load_index":1.25,"status":"Balanced","region":"Midwest"},{"state":"MN","service_line":"PCOS","bookings_last_month":16,"active_providers":1,"bpp":16.0,"target_bpp":10.0,"providers_needed":1.6,"gap":0.6,"load_index":1.6,"status":"Balanced","region":"Midwest"},{"state":"MN","service_line":"Fertility","bookings_last_month":28,"active_providers":1,"bpp":28.0,"target_bpp":10.0,"providers_needed":2.8,"gap":1.8,"load_index":2.8,"status":"Under-supplied","region":"Midwest"},{"state":"SC","service_line":"Everyday Rx","bookings_last_month":52,"active_providers":3,"bpp":17.3,"target_bpp":10.0,"providers_needed":5.2,"gap":2.2,"load_index":1.73,"status":"Under-supplied","region":"Southeast"},{"state":"SC","service_line":"Mental Health Rx","bookings_last_month":60,"active_providers":3,"bpp":20.0,"target_bpp":10.0,"providers_needed":6.0,"gap":3.0,"load_index":2.0,"status":"Under-supplied","region":"Southeast"},{"state":"SC","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":61,"active_providers":5,"bpp":12.2,"target_bpp":10.0,"providers_needed":6.1,"gap":1.1,"load_index":1.22,"status":"Under-supplied","region":"Southeast"},{"state":"SC","service_line":"Women's Health","bookings_last_month":33,"active_providers":3,"bpp":11.0,"target_bpp":10.0,"providers_needed":3.3,"gap":0.3,"load_index":1.1,"status":"Balanced","region":"Southeast"},{"state":"SC","service_line":"PCOS","bookings_last_month":19,"active_providers":2,"bpp":9.5,"target_bpp":10.0,"providers_needed":1.9,"gap":-0.1,"load_index":0.95,"status":"Balanced","region":"Southeast"},{"state":"SC","service_line":"Fertility","bookings_last_month":20,"active_providers":1,"bpp":20.0,"target_bpp":10.0,"providers_needed":2.0,"gap":1.0,"load_index":2.0,"status":"Under-supplied","region":"Southeast"},{"state":"AL","service_line":"Everyday Rx","bookings_last_month":54,"active_providers":3,"bpp":18.0,"target_bpp":10.0,"providers_needed":5.4,"gap":2.4,"load_index":1.8,"status":"Under-supplied","region":"Southeast"},{"state":"AL","service_line":"Mental Health Rx","bookings_last_month":69,"active_providers":6,"bpp":11.5,"target_bpp":10.0,"providers_needed":6.9,"gap":0.9,"load_index":1.15,"status":"Balanced","region":"Southeast"},{"state":"AL","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":63,"active_providers":4,"bpp":15.8,"target_bpp":10.0,"providers_needed":6.3,"gap":2.3,"load_index":1.58,"status":"Under-supplied","region":"Southeast"},{"state":"AL","service_line":"Women's Health","bookings_last_month":22,"active_providers":2,"bpp":11.0,"target_bpp":10.0,"providers_needed":2.2,"gap":0.2,"load_index":1.1,"status":"Balanced","region":"Southeast"},{"state":"AL","service_line":"PCOS","bookings_last_month":18,"active_providers":2,"bpp":9.0,"target_bpp":10.0,"providers_needed":1.8,"gap":-0.2,"load_index":0.9,"status":"Balanced","region":"Southeast"},{"state":"AL","service_line":"Fertility","bookings_last_month":24,"active_providers":1,"bpp":24.0,"target_bpp":10.0,"providers_needed":2.4,"gap":1.4,"load_index":2.4,"status":"Under-supplied","region":"Southeast"},{"state":"LA","service_line":"Everyday Rx","bookings_last_month":48,"active_providers":3,"bpp":16.0,"target_bpp":10.0,"providers_needed":4.8,"gap":1.8,"load_index":1.6,"status":"Under-supplied","region":"South Central"},{"state":"LA","service_line":"Mental Health Rx","bookings_last_month":61,"active_providers":5,"bpp":12.2,"target_bpp":10.0,"providers_needed":6.1,"gap":1.1,"load_index":1.22,"status":"Under-supplied","region":"South Central"},{"state":"LA","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":52,"active_providers":4,"bpp":13.0,"target_bpp":10.0,"providers_needed":5.2,"gap":1.2,"load_index":1.3,"status":"Under-supplied","region":"South Central"},{"state":"LA","service_line":"Women's Health","bookings_last_month":22,"active_providers":2,"bpp":11.0,"target_bpp":10.0,"providers_needed":2.2,"gap":0.2,"load_index":1.1,"status":"Balanced","region":"South Central"},{"state":"LA","service_line":"PCOS","bookings_last_month":16,"active_providers":2,"bpp":8.0,"target_bpp":10.0,"providers_needed":1.6,"gap":-0.4,"load_index":0.8,"status":"Balanced","region":"South Central"},{"state":"LA","service_line":"Fertility","bookings_last_month":23,"active_providers":1,"bpp":23.0,"target_bpp":10.0,"providers_needed":2.3,"gap":1.3,"load_index":2.3,"status":"Under-supplied","region":"South Central"},{"state":"KY","service_line":"Everyday Rx","bookings_last_month":33,"active_providers":2,"bpp":16.5,"target_bpp":10.0,"providers_needed":3.3,"gap":1.3,"load_index":1.65,"status":"Under-supplied","region":"Southeast"},{"state":"KY","service_line":"Mental Health Rx","bookings_last_month":61,"active_providers":4,"bpp":15.2,"target_bpp":10.0,"providers_needed":6.1,"gap":2.1,"load_index":1.52,"status":"Under-supplied","region":"Southeast"},{"state":"KY","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":73,"active_providers":5,"bpp":14.6,"target_bpp":10.0,"providers_needed":7.3,"gap":2.3,"load_index":1.46,"status":"Under-supplied","region":"Southeast"},{"state":"KY","service_line":"Women's Health","bookings_last_month":22,"active_providers":2,"bpp":11.0,"target_bpp":10.0,"providers_needed":2.2,"gap":0.2,"load_index":1.1,"status":"Balanced","region":"Southeast"},{"state":"KY","service_line":"PCOS","bookings_last_month":12,"active_providers":1,"bpp":12.0,"target_bpp":10.0,"providers_needed":1.2,"gap":0.2,"load_index":1.2,"status":"Balanced","region":"Southeast"},{"state":"KY","service_line":"Fertility","bookings_last_month":17,"active_providers":1,"bpp":17.0,"target_bpp":10.0,"providers_needed":1.7,"gap":0.7,"load_index":1.7,"status":"Balanced","region":"Southeast"},{"state":"OR","service_line":"Everyday Rx","bookings_last_month":45,"active_providers":2,"bpp":22.5,"target_bpp":10.0,"providers_needed":4.5,"gap":2.5,"load_index":2.25,"status":"Under-supplied","region":"Pacific"},{"state":"OR","service_line":"Mental Health Rx","bookings_last_month":52,"active_providers":4,"bpp":13.0,"target_bpp":10.0,"providers_needed":5.2,"gap":1.2,"load_index":1.3,"status":"Under-supplied","region":"Pacific"},{"state":"OR","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":73,"active_providers":5,"bpp":14.6,"target_bpp":10.0,"providers_needed":7.3,"gap":2.3,"load_index":1.46,"status":"Under-supplied","region":"Pacific"},{"state":"OR","service_line":"Women's Health","bookings_last_month":27,"active_providers":2,"bpp":13.5,"target_bpp":10.0,"providers_needed":2.7,"gap":0.7,"load_index":1.35,"status":"Balanced","region":"Pacific"},{"state":"OR","service_line":"PCOS","bookings_last_month":15,"active_providers":1,"bpp":15.0,"target_bpp":10.0,"providers_needed":1.5,"gap":0.5,"load_index":1.5,"status":"Balanced","region":"Pacific"},{"state":"OR","service_line":"Fertility","bookings_last_month":22,"active_providers":1,"bpp":22.0,"target_bpp":10.0,"providers_needed":2.2,"gap":1.2,"load_index":2.2,"status":"Under-supplied","region":"Pacific"},{"state":"OK","service_line":"Everyday Rx","bookings_last_month":34,"active_providers":2,"bpp":17.0,"target_bpp":10.0,"providers_needed":3.4,"gap":1.4,"load_index":1.7,"status":"Under-supplied","region":"South Central"},{"state":"OK","service_line":"Mental Health Rx","bookings_last_month":42,"active_providers":3,"bpp":14.0,"target_bpp":10.0,"providers_needed":4.2,"gap":1.2,"load_index":1.4,"status":"Under-supplied","region":"South Central"},{"state":"OK","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":57,"active_providers":3,"bpp":19.0,"target_bpp":10.0,"providers_needed":5.7,"gap":2.7,"load_index":1.9,"status":"Under-supplied","region":"South Central"},{"state":"OK","service_line":"Women's Health","bookings_last_month":22,"active_providers":2,"bpp":11.0,"target_bpp":10.0,"providers_needed":2.2,"gap":0.2,"load_index":1.1,"status":"Balanced","region":"South Central"},{"state":"OK","service_line":"PCOS","bookings_last_month":13,"active_providers":1,"bpp":13.0,"target_bpp":10.0,"providers_needed":1.3,"gap":0.3,"load_index":1.3,"status":"Balanced","region":"South Central"},{"state":"OK","service_line":"Fertility","bookings_last_month":21,"active_providers":1,"bpp":21.0,"target_bpp":10.0,"providers_needed":2.1,"gap":1.1,"load_index":2.1,"status":"Under-supplied","region":"South Central"},{"state":"CT","service_line":"Everyday Rx","bookings_last_month":35,"active_providers":2,"bpp":17.5,"target_bpp":10.0,"providers_needed":3.5,"gap":1.5,"load_index":1.75,"status":"Under-supplied","region":"Northeast"},{"state":"CT","service_line":"Mental Health Rx","bookings_last_month":39,"active_providers":5,"bpp":7.8,"target_bpp":10.0,"providers_needed":3.9,"gap":-1.1,"load_index":0.78,"status":"Over-supplied","region":"Northeast"},{"state":"CT","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":47,"active_providers":3,"bpp":15.7,"target_bpp":10.0,"providers_needed":4.7,"gap":1.7,"load_index":1.57,"status":"Under-supplied","region":"Northeast"},{"state":"CT","service_line":"Women's Health","bookings_last_month":22,"active_providers":2,"bpp":11.0,"target_bpp":10.0,"providers_needed":2.2,"gap":0.2,"load_index":1.1,"status":"Balanced","region":"Northeast"},{"state":"CT","service_line":"PCOS","bookings_last_month":10,"active_providers":1,"bpp":10.0,"target_bpp":10.0,"providers_needed":1.0,"gap":0.0,"load_index":1.0,"status":"Balanced","region":"Northeast"},{"state":"CT","service_line":"Fertility","bookings_last_month":15,"active_providers":1,"bpp":15.0,"target_bpp":10.0,"providers_needed":1.5,"gap":0.5,"load_index":1.5,"status":"Balanced","region":"Northeast"},{"state":"UT","service_line":"Everyday Rx","bookings_last_month":25,"active_providers":1,"bpp":25.0,"target_bpp":10.0,"providers_needed":2.5,"gap":1.5,"load_index":2.5,"status":"Under-supplied","region":"Mountain/SW"},{"state":"UT","service_line":"Mental Health Rx","bookings_last_month":47,"active_providers":4,"bpp":11.8,"target_bpp":10.0,"providers_needed":4.7,"gap":0.7,"load_index":1.18,"status":"Balanced","region":"Mountain/SW"},{"state":"UT","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":57,"active_providers":4,"bpp":14.2,"target_bpp":10.0,"providers_needed":5.7,"gap":1.7,"load_index":1.42,"status":"Under-supplied","region":"Mountain/SW"},{"state":"UT","service_line":"Women's Health","bookings_last_month":16,"active_providers":1,"bpp":16.0,"target_bpp":10.0,"providers_needed":1.6,"gap":0.6,"load_index":1.6,"status":"Balanced","region":"Mountain/SW"},{"state":"UT","service_line":"PCOS","bookings_last_month":8,"active_providers":1,"bpp":8.0,"target_bpp":10.0,"providers_needed":0.8,"gap":-0.2,"load_index":0.8,"status":"Balanced","region":"Mountain/SW"},{"state":"UT","service_line":"Fertility","bookings_last_month":14,"active_providers":1,"bpp":14.0,"target_bpp":10.0,"providers_needed":1.4,"gap":0.4,"load_index":1.4,"status":"Balanced","region":"Mountain/SW"},{"state":"IA","service_line":"Everyday Rx","bookings_last_month":28,"active_providers":2,"bpp":14.0,"target_bpp":10.0,"providers_needed":2.8,"gap":0.8,"load_index":1.4,"status":"Balanced","region":"Midwest"},{"state":"IA","service_line":"Mental Health Rx","bookings_last_month":32,"active_providers":2,"bpp":16.0,"target_bpp":10.0,"providers_needed":3.2,"gap":1.2,"load_index":1.6,"status":"Under-supplied","region":"Midwest"},{"state":"IA","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":54,"active_providers":4,"bpp":13.5,"target_bpp":10.0,"providers_needed":5.4,"gap":1.4,"load_index":1.35,"status":"Under-supplied","region":"Midwest"},{"state":"IA","service_line":"Women's Health","bookings_last_month":14,"active_providers":1,"bpp":14.0,"target_bpp":10.0,"providers_needed":1.4,"gap":0.4,"load_index":1.4,"status":"Balanced","region":"Midwest"},{"state":"IA","service_line":"PCOS","bookings_last_month":10,"active_providers":1,"bpp":10.0,"target_bpp":10.0,"providers_needed":1.0,"gap":0.0,"load_index":1.0,"status":"Balanced","region":"Midwest"},{"state":"IA","service_line":"Fertility","bookings_last_month":13,"active_providers":1,"bpp":13.0,"target_bpp":10.0,"providers_needed":1.3,"gap":0.3,"load_index":1.3,"status":"Balanced","region":"Midwest"},{"state":"NV","service_line":"Everyday Rx","bookings_last_month":31,"active_providers":2,"bpp":15.5,"target_bpp":10.0,"providers_needed":3.1,"gap":1.1,"load_index":1.55,"status":"Under-supplied","region":"Mountain/SW"},{"state":"NV","service_line":"Mental Health Rx","bookings_last_month":32,"active_providers":2,"bpp":16.0,"target_bpp":10.0,"providers_needed":3.2,"gap":1.2,"load_index":1.6,"status":"Under-supplied","region":"Mountain/SW"},{"state":"NV","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":40,"active_providers":3,"bpp":13.3,"target_bpp":10.0,"providers_needed":4.0,"gap":1.0,"load_index":1.33,"status":"Under-supplied","region":"Mountain/SW"},{"state":"NV","service_line":"Women's Health","bookings_last_month":19,"active_providers":1,"bpp":19.0,"target_bpp":10.0,"providers_needed":1.9,"gap":0.9,"load_index":1.9,"status":"Balanced","region":"Mountain/SW"},{"state":"NV","service_line":"PCOS","bookings_last_month":9,"active_providers":1,"bpp":9.0,"target_bpp":10.0,"providers_needed":0.9,"gap":-0.1,"load_index":0.9,"status":"Balanced","region":"Mountain/SW"},{"state":"NV","service_line":"Fertility","bookings_last_month":12,"active_providers":1,"bpp":12.0,"target_bpp":10.0,"providers_needed":1.2,"gap":0.2,"load_index":1.2,"status":"Balanced","region":"Mountain/SW"},{"state":"AR","service_line":"Everyday Rx","bookings_last_month":28,"active_providers":1,"bpp":28.0,"target_bpp":10.0,"providers_needed":2.8,"gap":1.8,"load_index":2.8,"status":"Under-supplied","region":"South Central"},{"state":"AR","service_line":"Mental Health Rx","bookings_last_month":39,"active_providers":3,"bpp":13.0,"target_bpp":10.0,"providers_needed":3.9,"gap":0.9,"load_index":1.3,"status":"Balanced","region":"South Central"},{"state":"AR","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":35,"active_providers":2,"bpp":17.5,"target_bpp":10.0,"providers_needed":3.5,"gap":1.5,"load_index":1.75,"status":"Under-supplied","region":"South Central"},{"state":"AR","service_line":"Women's Health","bookings_last_month":13,"active_providers":1,"bpp":13.0,"target_bpp":10.0,"providers_needed":1.3,"gap":0.3,"load_index":1.3,"status":"Balanced","region":"South Central"},{"state":"AR","service_line":"PCOS","bookings_last_month":9,"active_providers":1,"bpp":9.0,"target_bpp":10.0,"providers_needed":0.9,"gap":-0.1,"load_index":0.9,"status":"Balanced","region":"South Central"},{"state":"AR","service_line":"Fertility","bookings_last_month":11,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":1.1,"gap":1.1,"load_index":null,"status":"No coverage","region":"South Central"},{"state":"MS","service_line":"Everyday Rx","bookings_last_month":28,"active_providers":2,"bpp":14.0,"target_bpp":10.0,"providers_needed":2.8,"gap":0.8,"load_index":1.4,"status":"Balanced","region":"Southeast"},{"state":"MS","service_line":"Mental Health Rx","bookings_last_month":35,"active_providers":3,"bpp":11.7,"target_bpp":10.0,"providers_needed":3.5,"gap":0.5,"load_index":1.17,"status":"Balanced","region":"Southeast"},{"state":"MS","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":49,"active_providers":3,"bpp":16.3,"target_bpp":10.0,"providers_needed":4.9,"gap":1.9,"load_index":1.63,"status":"Under-supplied","region":"Southeast"},{"state":"MS","service_line":"Women's Health","bookings_last_month":17,"active_providers":1,"bpp":17.0,"target_bpp":10.0,"providers_needed":1.7,"gap":0.7,"load_index":1.7,"status":"Balanced","region":"Southeast"},{"state":"MS","service_line":"PCOS","bookings_last_month":10,"active_providers":1,"bpp":10.0,"target_bpp":10.0,"providers_needed":1.0,"gap":0.0,"load_index":1.0,"status":"Balanced","region":"Southeast"},{"state":"MS","service_line":"Fertility","bookings_last_month":15,"active_providers":1,"bpp":15.0,"target_bpp":10.0,"providers_needed":1.5,"gap":0.5,"load_index":1.5,"status":"Balanced","region":"Southeast"},{"state":"KS","service_line":"Everyday Rx","bookings_last_month":23,"active_providers":1,"bpp":23.0,"target_bpp":10.0,"providers_needed":2.3,"gap":1.3,"load_index":2.3,"status":"Under-supplied","region":"Midwest"},{"state":"KS","service_line":"Mental Health Rx","bookings_last_month":36,"active_providers":3,"bpp":12.0,"target_bpp":10.0,"providers_needed":3.6,"gap":0.6,"load_index":1.2,"status":"Balanced","region":"Midwest"},{"state":"KS","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":42,"active_providers":3,"bpp":14.0,"target_bpp":10.0,"providers_needed":4.2,"gap":1.2,"load_index":1.4,"status":"Under-supplied","region":"Midwest"},{"state":"KS","service_line":"Women's Health","bookings_last_month":14,"active_providers":1,"bpp":14.0,"target_bpp":10.0,"providers_needed":1.4,"gap":0.4,"load_index":1.4,"status":"Balanced","region":"Midwest"},{"state":"KS","service_line":"PCOS","bookings_last_month":8,"active_providers":1,"bpp":8.0,"target_bpp":10.0,"providers_needed":0.8,"gap":-0.2,"load_index":0.8,"status":"Balanced","region":"Midwest"},{"state":"KS","service_line":"Fertility","bookings_last_month":12,"active_providers":1,"bpp":12.0,"target_bpp":10.0,"providers_needed":1.2,"gap":0.2,"load_index":1.2,"status":"Balanced","region":"Midwest"},{"state":"NM","service_line":"Everyday Rx","bookings_last_month":20,"active_providers":1,"bpp":20.0,"target_bpp":10.0,"providers_needed":2.0,"gap":1.0,"load_index":2.0,"status":"Under-supplied","region":"Mountain/SW"},{"state":"NM","service_line":"Mental Health Rx","bookings_last_month":19,"active_providers":1,"bpp":19.0,"target_bpp":10.0,"providers_needed":1.9,"gap":0.9,"load_index":1.9,"status":"Balanced","region":"Mountain/SW"},{"state":"NM","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":30,"active_providers":2,"bpp":15.0,"target_bpp":10.0,"providers_needed":3.0,"gap":1.0,"load_index":1.5,"status":"Under-supplied","region":"Mountain/SW"},{"state":"NM","service_line":"Women's Health","bookings_last_month":9,"active_providers":1,"bpp":9.0,"target_bpp":10.0,"providers_needed":0.9,"gap":-0.1,"load_index":0.9,"status":"Balanced","region":"Mountain/SW"},{"state":"NM","service_line":"PCOS","bookings_last_month":7,"active_providers":1,"bpp":7.0,"target_bpp":10.0,"providers_needed":0.7,"gap":-0.3,"load_index":0.7,"status":"Balanced","region":"Mountain/SW"},{"state":"NM","service_line":"Fertility","bookings_last_month":10,"active_providers":1,"bpp":10.0,"target_bpp":10.0,"providers_needed":1.0,"gap":0.0,"load_index":1.0,"status":"Balanced","region":"Mountain/SW"},{"state":"NE","service_line":"Everyday Rx","bookings_last_month":17,"active_providers":1,"bpp":17.0,"target_bpp":10.0,"providers_needed":1.7,"gap":0.7,"load_index":1.7,"status":"Balanced","region":"Midwest"},{"state":"NE","service_line":"Mental Health Rx","bookings_last_month":21,"active_providers":2,"bpp":10.5,"target_bpp":10.0,"providers_needed":2.1,"gap":0.1,"load_index":1.05,"status":"Balanced","region":"Midwest"},{"state":"NE","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":33,"active_providers":3,"bpp":11.0,"target_bpp":10.0,"providers_needed":3.3,"gap":0.3,"load_index":1.1,"status":"Balanced","region":"Midwest"},{"state":"NE","service_line":"Women's Health","bookings_last_month":10,"active_providers":1,"bpp":10.0,"target_bpp":10.0,"providers_needed":1.0,"gap":0.0,"load_index":1.0,"status":"Balanced","region":"Midwest"},{"state":"NE","service_line":"PCOS","bookings_last_month":6,"active_providers":1,"bpp":6.0,"target_bpp":10.0,"providers_needed":0.6,"gap":-0.4,"load_index":0.6,"status":"Balanced","region":"Midwest"},{"state":"NE","service_line":"Fertility","bookings_last_month":7,"active_providers":1,"bpp":7.0,"target_bpp":10.0,"providers_needed":0.7,"gap":-0.3,"load_index":0.7,"status":"Balanced","region":"Midwest"},{"state":"ID","service_line":"Everyday Rx","bookings_last_month":15,"active_providers":1,"bpp":15.0,"target_bpp":10.0,"providers_needed":1.5,"gap":0.5,"load_index":1.5,"status":"Balanced","region":"Mountain/SW"},{"state":"ID","service_line":"Mental Health Rx","bookings_last_month":21,"active_providers":1,"bpp":21.0,"target_bpp":10.0,"providers_needed":2.1,"gap":1.1,"load_index":2.1,"status":"Under-supplied","region":"Mountain/SW"},{"state":"ID","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":26,"active_providers":1,"bpp":26.0,"target_bpp":10.0,"providers_needed":2.6,"gap":1.6,"load_index":2.6,"status":"Under-supplied","region":"Mountain/SW"},{"state":"ID","service_line":"Women's Health","bookings_last_month":10,"active_providers":1,"bpp":10.0,"target_bpp":10.0,"providers_needed":1.0,"gap":0.0,"load_index":1.0,"status":"Balanced","region":"Mountain/SW"},{"state":"ID","service_line":"PCOS","bookings_last_month":5,"active_providers":1,"bpp":5.0,"target_bpp":10.0,"providers_needed":0.5,"gap":-0.5,"load_index":0.5,"status":"Balanced","region":"Mountain/SW"},{"state":"ID","service_line":"Fertility","bookings_last_month":6,"active_providers":1,"bpp":6.0,"target_bpp":10.0,"providers_needed":0.6,"gap":-0.4,"load_index":0.6,"status":"Balanced","region":"Mountain/SW"},{"state":"WV","service_line":"Everyday Rx","bookings_last_month":12,"active_providers":1,"bpp":12.0,"target_bpp":10.0,"providers_needed":1.2,"gap":0.2,"load_index":1.2,"status":"Balanced","region":"Southeast"},{"state":"WV","service_line":"Mental Health Rx","bookings_last_month":18,"active_providers":1,"bpp":18.0,"target_bpp":10.0,"providers_needed":1.8,"gap":0.8,"load_index":1.8,"status":"Balanced","region":"Southeast"},{"state":"WV","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":28,"active_providers":2,"bpp":14.0,"target_bpp":10.0,"providers_needed":2.8,"gap":0.8,"load_index":1.4,"status":"Balanced","region":"Southeast"},{"state":"WV","service_line":"Women's Health","bookings_last_month":10,"active_providers":1,"bpp":10.0,"target_bpp":10.0,"providers_needed":1.0,"gap":0.0,"load_index":1.0,"status":"Balanced","region":"Southeast"},{"state":"WV","service_line":"PCOS","bookings_last_month":5,"active_providers":1,"bpp":5.0,"target_bpp":10.0,"providers_needed":0.5,"gap":-0.5,"load_index":0.5,"status":"Balanced","region":"Southeast"},{"state":"WV","service_line":"Fertility","bookings_last_month":8,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.8,"gap":0.8,"load_index":null,"status":"No coverage","region":"Southeast"},{"state":"HI","service_line":"Everyday Rx","bookings_last_month":14,"active_providers":1,"bpp":14.0,"target_bpp":10.0,"providers_needed":1.4,"gap":0.4,"load_index":1.4,"status":"Balanced","region":"Pacific"},{"state":"HI","service_line":"Mental Health Rx","bookings_last_month":18,"active_providers":2,"bpp":9.0,"target_bpp":10.0,"providers_needed":1.8,"gap":-0.2,"load_index":0.9,"status":"Balanced","region":"Pacific"},{"state":"HI","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":17,"active_providers":1,"bpp":17.0,"target_bpp":10.0,"providers_needed":1.7,"gap":0.7,"load_index":1.7,"status":"Balanced","region":"Pacific"},{"state":"HI","service_line":"Women's Health","bookings_last_month":6,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.6,"gap":0.6,"load_index":null,"status":"No coverage","region":"Pacific"},{"state":"HI","service_line":"PCOS","bookings_last_month":4,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.4,"gap":0.4,"load_index":null,"status":"No coverage","region":"Pacific"},{"state":"HI","service_line":"Fertility","bookings_last_month":7,"active_providers":1,"bpp":7.0,"target_bpp":10.0,"providers_needed":0.7,"gap":-0.3,"load_index":0.7,"status":"Balanced","region":"Pacific"},{"state":"NH","service_line":"Everyday Rx","bookings_last_month":13,"active_providers":1,"bpp":13.0,"target_bpp":10.0,"providers_needed":1.3,"gap":0.3,"load_index":1.3,"status":"Balanced","region":"Northeast"},{"state":"NH","service_line":"Mental Health Rx","bookings_last_month":18,"active_providers":2,"bpp":9.0,"target_bpp":10.0,"providers_needed":1.8,"gap":-0.2,"load_index":0.9,"status":"Balanced","region":"Northeast"},{"state":"NH","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":16,"active_providers":1,"bpp":16.0,"target_bpp":10.0,"providers_needed":1.6,"gap":0.6,"load_index":1.6,"status":"Balanced","region":"Northeast"},{"state":"NH","service_line":"Women's Health","bookings_last_month":6,"active_providers":1,"bpp":6.0,"target_bpp":10.0,"providers_needed":0.6,"gap":-0.4,"load_index":0.6,"status":"Balanced","region":"Northeast"},{"state":"NH","service_line":"PCOS","bookings_last_month":5,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.5,"gap":0.5,"load_index":null,"status":"No coverage","region":"Northeast"},{"state":"NH","service_line":"Fertility","bookings_last_month":5,"active_providers":1,"bpp":5.0,"target_bpp":10.0,"providers_needed":0.5,"gap":-0.5,"load_index":0.5,"status":"Balanced","region":"Northeast"},{"state":"ME","service_line":"Everyday Rx","bookings_last_month":10,"active_providers":1,"bpp":10.0,"target_bpp":10.0,"providers_needed":1.0,"gap":0.0,"load_index":1.0,"status":"Balanced","region":"Northeast"},{"state":"ME","service_line":"Mental Health Rx","bookings_last_month":18,"active_providers":1,"bpp":18.0,"target_bpp":10.0,"providers_needed":1.8,"gap":0.8,"load_index":1.8,"status":"Balanced","region":"Northeast"},{"state":"ME","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":16,"active_providers":1,"bpp":16.0,"target_bpp":10.0,"providers_needed":1.6,"gap":0.6,"load_index":1.6,"status":"Balanced","region":"Northeast"},{"state":"ME","service_line":"Women's Health","bookings_last_month":8,"active_providers":1,"bpp":8.0,"target_bpp":10.0,"providers_needed":0.8,"gap":-0.2,"load_index":0.8,"status":"Balanced","region":"Northeast"},{"state":"ME","service_line":"PCOS","bookings_last_month":4,"active_providers":1,"bpp":4.0,"target_bpp":10.0,"providers_needed":0.4,"gap":-0.6,"load_index":0.4,"status":"Balanced","region":"Northeast"},{"state":"ME","service_line":"Fertility","bookings_last_month":5,"active_providers":1,"bpp":5.0,"target_bpp":10.0,"providers_needed":0.5,"gap":-0.5,"load_index":0.5,"status":"Balanced","region":"Northeast"},{"state":"MT","service_line":"Everyday Rx","bookings_last_month":8,"active_providers":1,"bpp":8.0,"target_bpp":10.0,"providers_needed":0.8,"gap":-0.2,"load_index":0.8,"status":"Balanced","region":"Mountain/SW"},{"state":"MT","service_line":"Mental Health Rx","bookings_last_month":13,"active_providers":1,"bpp":13.0,"target_bpp":10.0,"providers_needed":1.3,"gap":0.3,"load_index":1.3,"status":"Balanced","region":"Mountain/SW"},{"state":"MT","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":17,"active_providers":1,"bpp":17.0,"target_bpp":10.0,"providers_needed":1.7,"gap":0.7,"load_index":1.7,"status":"Balanced","region":"Mountain/SW"},{"state":"MT","service_line":"Women's Health","bookings_last_month":6,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.6,"gap":0.6,"load_index":null,"status":"No coverage","region":"Mountain/SW"},{"state":"MT","service_line":"PCOS","bookings_last_month":0,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.0,"gap":0.0,"load_index":null,"status":"Balanced","region":"Mountain/SW"},{"state":"MT","service_line":"Fertility","bookings_last_month":4,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.4,"gap":0.4,"load_index":null,"status":"No coverage","region":"Mountain/SW"},{"state":"RI","service_line":"Everyday Rx","bookings_last_month":8,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.8,"gap":0.8,"load_index":null,"status":"No coverage","region":"Northeast"},{"state":"RI","service_line":"Mental Health Rx","bookings_last_month":12,"active_providers":1,"bpp":12.0,"target_bpp":10.0,"providers_needed":1.2,"gap":0.2,"load_index":1.2,"status":"Balanced","region":"Northeast"},{"state":"RI","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":18,"active_providers":1,"bpp":18.0,"target_bpp":10.0,"providers_needed":1.8,"gap":0.8,"load_index":1.8,"status":"Balanced","region":"Northeast"},{"state":"RI","service_line":"Women's Health","bookings_last_month":5,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.5,"gap":0.5,"load_index":null,"status":"No coverage","region":"Northeast"},{"state":"RI","service_line":"PCOS","bookings_last_month":0,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.0,"gap":0.0,"load_index":null,"status":"Balanced","region":"Northeast"},{"state":"RI","service_line":"Fertility","bookings_last_month":4,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.4,"gap":0.4,"load_index":null,"status":"No coverage","region":"Northeast"},{"state":"DE","service_line":"Everyday Rx","bookings_last_month":9,"active_providers":1,"bpp":9.0,"target_bpp":10.0,"providers_needed":0.9,"gap":-0.1,"load_index":0.9,"status":"Balanced","region":"Southeast"},{"state":"DE","service_line":"Mental Health Rx","bookings_last_month":13,"active_providers":1,"bpp":13.0,"target_bpp":10.0,"providers_needed":1.3,"gap":0.3,"load_index":1.3,"status":"Balanced","region":"Southeast"},{"state":"DE","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":12,"active_providers":1,"bpp":12.0,"target_bpp":10.0,"providers_needed":1.2,"gap":0.2,"load_index":1.2,"status":"Balanced","region":"Southeast"},{"state":"DE","service_line":"Women's Health","bookings_last_month":4,"active_providers":1,"bpp":4.0,"target_bpp":10.0,"providers_needed":0.4,"gap":-0.6,"load_index":0.4,"status":"Balanced","region":"Southeast"},{"state":"DE","service_line":"PCOS","bookings_last_month":3,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.3,"gap":0.3,"load_index":null,"status":"No coverage","region":"Southeast"},{"state":"DE","service_line":"Fertility","bookings_last_month":0,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.0,"gap":0.0,"load_index":null,"status":"Balanced","region":"Southeast"},{"state":"SD","service_line":"Everyday Rx","bookings_last_month":8,"active_providers":1,"bpp":8.0,"target_bpp":10.0,"providers_needed":0.8,"gap":-0.2,"load_index":0.8,"status":"Balanced","region":"Midwest"},{"state":"SD","service_line":"Mental Health Rx","bookings_last_month":9,"active_providers":1,"bpp":9.0,"target_bpp":10.0,"providers_needed":0.9,"gap":-0.1,"load_index":0.9,"status":"Balanced","region":"Midwest"},{"state":"SD","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":12,"active_providers":1,"bpp":12.0,"target_bpp":10.0,"providers_needed":1.2,"gap":0.2,"load_index":1.2,"status":"Balanced","region":"Midwest"},{"state":"SD","service_line":"Women's Health","bookings_last_month":5,"active_providers":1,"bpp":5.0,"target_bpp":10.0,"providers_needed":0.5,"gap":-0.5,"load_index":0.5,"status":"Balanced","region":"Midwest"},{"state":"SD","service_line":"PCOS","bookings_last_month":0,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.0,"gap":0.0,"load_index":null,"status":"Balanced","region":"Midwest"},{"state":"SD","service_line":"Fertility","bookings_last_month":1,"active_providers":1,"bpp":1.0,"target_bpp":10.0,"providers_needed":0.1,"gap":-0.9,"load_index":0.1,"status":"Balanced","region":"Midwest"},{"state":"ND","service_line":"Everyday Rx","bookings_last_month":8,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.8,"gap":0.8,"load_index":null,"status":"No coverage","region":"Midwest"},{"state":"ND","service_line":"Mental Health Rx","bookings_last_month":9,"active_providers":1,"bpp":9.0,"target_bpp":10.0,"providers_needed":0.9,"gap":-0.1,"load_index":0.9,"status":"Balanced","region":"Midwest"},{"state":"ND","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":11,"active_providers":1,"bpp":11.0,"target_bpp":10.0,"providers_needed":1.1,"gap":0.1,"load_index":1.1,"status":"Balanced","region":"Midwest"},{"state":"ND","service_line":"Women's Health","bookings_last_month":3,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.3,"gap":0.3,"load_index":null,"status":"No coverage","region":"Midwest"},{"state":"ND","service_line":"PCOS","bookings_last_month":0,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.0,"gap":0.0,"load_index":null,"status":"Balanced","region":"Midwest"},{"state":"ND","service_line":"Fertility","bookings_last_month":3,"active_providers":1,"bpp":3.0,"target_bpp":10.0,"providers_needed":0.3,"gap":-0.7,"load_index":0.3,"status":"Balanced","region":"Midwest"},{"state":"AK","service_line":"Everyday Rx","bookings_last_month":7,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.7,"gap":0.7,"load_index":null,"status":"No coverage","region":"Pacific"},{"state":"AK","service_line":"Mental Health Rx","bookings_last_month":7,"active_providers":1,"bpp":7.0,"target_bpp":10.0,"providers_needed":0.7,"gap":-0.3,"load_index":0.7,"status":"Balanced","region":"Pacific"},{"state":"AK","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":9,"active_providers":1,"bpp":9.0,"target_bpp":10.0,"providers_needed":0.9,"gap":-0.1,"load_index":0.9,"status":"Balanced","region":"Pacific"},{"state":"AK","service_line":"Women's Health","bookings_last_month":4,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.4,"gap":0.4,"load_index":null,"status":"No coverage","region":"Pacific"},{"state":"AK","service_line":"PCOS","bookings_last_month":2,"active_providers":1,"bpp":2.0,"target_bpp":10.0,"providers_needed":0.2,"gap":-0.8,"load_index":0.2,"status":"Balanced","region":"Pacific"},{"state":"AK","service_line":"Fertility","bookings_last_month":2,"active_providers":1,"bpp":2.0,"target_bpp":10.0,"providers_needed":0.2,"gap":-0.8,"load_index":0.2,"status":"Balanced","region":"Pacific"},{"state":"DC","service_line":"Everyday Rx","bookings_last_month":4,"active_providers":1,"bpp":4.0,"target_bpp":10.0,"providers_needed":0.4,"gap":-0.6,"load_index":0.4,"status":"Balanced","region":"Southeast"},{"state":"DC","service_line":"Mental Health Rx","bookings_last_month":7,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.7,"gap":0.7,"load_index":null,"status":"No coverage","region":"Southeast"},{"state":"DC","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":10,"active_providers":1,"bpp":10.0,"target_bpp":10.0,"providers_needed":1.0,"gap":0.0,"load_index":1.0,"status":"Balanced","region":"Southeast"},{"state":"DC","service_line":"Women's Health","bookings_last_month":4,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.4,"gap":0.4,"load_index":null,"status":"No coverage","region":"Southeast"},{"state":"DC","service_line":"PCOS","bookings_last_month":2,"active_providers":1,"bpp":2.0,"target_bpp":10.0,"providers_needed":0.2,"gap":-0.8,"load_index":0.2,"status":"Balanced","region":"Southeast"},{"state":"DC","service_line":"Fertility","bookings_last_month":3,"active_providers":1,"bpp":3.0,"target_bpp":10.0,"providers_needed":0.3,"gap":-0.7,"load_index":0.3,"status":"Balanced","region":"Southeast"},{"state":"VT","service_line":"Everyday Rx","bookings_last_month":4,"active_providers":1,"bpp":4.0,"target_bpp":10.0,"providers_needed":0.4,"gap":-0.6,"load_index":0.4,"status":"Balanced","region":"Northeast"},{"state":"VT","service_line":"Mental Health Rx","bookings_last_month":6,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.6,"gap":0.6,"load_index":null,"status":"No coverage","region":"Northeast"},{"state":"VT","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":9,"active_providers":1,"bpp":9.0,"target_bpp":10.0,"providers_needed":0.9,"gap":-0.1,"load_index":0.9,"status":"Balanced","region":"Northeast"},{"state":"VT","service_line":"Women's Health","bookings_last_month":0,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.0,"gap":0.0,"load_index":null,"status":"Balanced","region":"Northeast"},{"state":"VT","service_line":"PCOS","bookings_last_month":0,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.0,"gap":0.0,"load_index":null,"status":"Balanced","region":"Northeast"},{"state":"VT","service_line":"Fertility","bookings_last_month":3,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.3,"gap":0.3,"load_index":null,"status":"No coverage","region":"Northeast"},{"state":"WY","service_line":"Everyday Rx","bookings_last_month":5,"active_providers":1,"bpp":5.0,"target_bpp":10.0,"providers_needed":0.5,"gap":-0.5,"load_index":0.5,"status":"Balanced","region":"Mountain/SW"},{"state":"WY","service_line":"Mental Health Rx","bookings_last_month":7,"active_providers":1,"bpp":7.0,"target_bpp":10.0,"providers_needed":0.7,"gap":-0.3,"load_index":0.7,"status":"Balanced","region":"Mountain/SW"},{"state":"WY","service_line":"Success by Sesame (Weight Loss)","bookings_last_month":9,"active_providers":1,"bpp":9.0,"target_bpp":10.0,"providers_needed":0.9,"gap":-0.1,"load_index":0.9,"status":"Balanced","region":"Mountain/SW"},{"state":"WY","service_line":"Women's Health","bookings_last_month":2,"active_providers":1,"bpp":2.0,"target_bpp":10.0,"providers_needed":0.2,"gap":-0.8,"load_index":0.2,"status":"Balanced","region":"Mountain/SW"},{"state":"WY","service_line":"PCOS","bookings_last_month":0,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.0,"gap":0.0,"load_index":null,"status":"Balanced","region":"Mountain/SW"},{"state":"WY","service_line":"Fertility","bookings_last_month":0,"active_providers":0,"bpp":null,"target_bpp":10.0,"providers_needed":0.0,"gap":0.0,"load_index":null,"status":"Balanced","region":"Mountain/SW"}];
+const META = {"states_ordered":["CA","TX","FL","NY","PA","IL","OH","GA","MI","NC","NJ","VA","WA","TN","AZ","IN","MA","WI","MO","CO","MD","MN","AL","SC","OR","LA","KY","OK","CT","UT","MS","IA","NV","AR","KS","NM","NE","ID","WV","HI","NH","ME","MT","RI","DE","SD","ND","AK","DC","WY","VT"],"services":["Everyday Rx","Mental Health Rx","Success by Sesame (Weight Loss)","Women's Health","PCOS","Fertility"],"svc_short":{"Everyday Rx":"Everyday Rx","Mental Health Rx":"Mental Health","Success by Sesame (Weight Loss)":"Weight Loss","Women's Health":"Women's Health","PCOS":"PCOS","Fertility":"Fertility"}};
+const REGION = {"region_order":["Southeast","Midwest","South Central","Northeast","Pacific","Mountain/SW"],"cells":{"Pacific|Everyday Rx":{"region":"Pacific","service_line":"Everyday Rx","bookings":499,"providers":24,"bpp":20.8,"load_index":2.08,"gap":25.9},"Pacific|Mental Health Rx":{"region":"Pacific","service_line":"Mental Health Rx","bookings":592,"providers":75,"bpp":7.9,"load_index":0.79,"gap":-15.8},"Pacific|Success by Sesame (Weight Loss)":{"region":"Pacific","service_line":"Success by Sesame (Weight Loss)","bookings":803,"providers":59,"bpp":13.6,"load_index":1.36,"gap":21.3},"Pacific|Women's Health":{"region":"Pacific","service_line":"Women's Health","bookings":244,"providers":19,"bpp":12.8,"load_index":1.28,"gap":5.4},"Pacific|PCOS":{"region":"Pacific","service_line":"PCOS","bookings":147,"providers":14,"bpp":10.5,"load_index":1.05,"gap":0.7},"Pacific|Fertility":{"region":"Pacific","service_line":"Fertility","bookings":240,"providers":11,"bpp":21.8,"load_index":2.18,"gap":13.0},"Mountain/SW|Everyday Rx":{"region":"Mountain/SW","service_line":"Everyday Rx","bookings":217,"providers":12,"bpp":18.1,"load_index":1.81,"gap":9.7},"Mountain/SW|Mental Health Rx":{"region":"Mountain/SW","service_line":"Mental Health Rx","bookings":300,"providers":21,"bpp":14.3,"load_index":1.43,"gap":9.0},"Mountain/SW|Success by Sesame (Weight Loss)":{"region":"Mountain/SW","service_line":"Success by Sesame (Weight Loss)","bookings":374,"providers":23,"bpp":16.3,"load_index":1.63,"gap":14.4},"Mountain/SW|Women's Health":{"region":"Mountain/SW","service_line":"Women's Health","bookings":136,"providers":10,"bpp":13.6,"load_index":1.36,"gap":3.6},"Mountain/SW|PCOS":{"region":"Mountain/SW","service_line":"PCOS","bookings":66,"providers":8,"bpp":8.2,"load_index":0.82,"gap":-1.4},"Mountain/SW|Fertility":{"region":"Mountain/SW","service_line":"Fertility","bookings":107,"providers":8,"bpp":13.4,"load_index":1.34,"gap":2.7},"Midwest|Everyday Rx":{"region":"Midwest","service_line":"Everyday Rx","bookings":624,"providers":34,"bpp":18.4,"load_index":1.84,"gap":28.4},"Midwest|Mental Health Rx":{"region":"Midwest","service_line":"Mental Health Rx","bookings":770,"providers":56,"bpp":13.8,"load_index":1.38,"gap":21.0},"Midwest|Success by Sesame (Weight Loss)":{"region":"Midwest","service_line":"Success by Sesame (Weight Loss)","bookings":1109,"providers":77,"bpp":14.4,"load_index":1.44,"gap":33.9},"Midwest|Women's Health":{"region":"Midwest","service_line":"Women's Health","bookings":349,"providers":31,"bpp":11.3,"load_index":1.13,"gap":3.9},"Midwest|PCOS":{"region":"Midwest","service_line":"PCOS","bookings":182,"providers":19,"bpp":9.6,"load_index":0.96,"gap":-0.8},"Midwest|Fertility":{"region":"Midwest","service_line":"Fertility","bookings":314,"providers":17,"bpp":18.5,"load_index":1.85,"gap":14.4},"Northeast|Everyday Rx":{"region":"Northeast","service_line":"Everyday Rx","bookings":463,"providers":26,"bpp":17.8,"load_index":1.78,"gap":20.3},"Northeast|Mental Health Rx":{"region":"Northeast","service_line":"Mental Health Rx","bookings":610,"providers":59,"bpp":10.3,"load_index":1.03,"gap":2.0},"Northeast|Success by Sesame (Weight Loss)":{"region":"Northeast","service_line":"Success by Sesame (Weight Loss)","bookings":800,"providers":53,"bpp":15.1,"load_index":1.51,"gap":27.0},"Northeast|Women's Health":{"region":"Northeast","service_line":"Women's Health","bookings":300,"providers":26,"bpp":11.5,"load_index":1.15,"gap":4.0},"Northeast|PCOS":{"region":"Northeast","service_line":"PCOS","bookings":171,"providers":17,"bpp":10.1,"load_index":1.01,"gap":0.1},"Northeast|Fertility":{"region":"Northeast","service_line":"Fertility","bookings":260,"providers":16,"bpp":16.2,"load_index":1.62,"gap":10.0},"Southeast|Everyday Rx":{"region":"Southeast","service_line":"Everyday Rx","bookings":824,"providers":53,"bpp":15.5,"load_index":1.55,"gap":29.4},"Southeast|Mental Health Rx":{"region":"Southeast","service_line":"Mental Health Rx","bookings":1051,"providers":79,"bpp":13.3,"load_index":1.33,"gap":26.1},"Southeast|Success by Sesame (Weight Loss)":{"region":"Southeast","service_line":"Success by Sesame (Weight Loss)","bookings":1267,"providers":64,"bpp":19.8,"load_index":1.98,"gap":62.7},"Southeast|Women's Health":{"region":"Southeast","service_line":"Women's Health","bookings":474,"providers":43,"bpp":11.0,"load_index":1.1,"gap":4.4},"Southeast|PCOS":{"region":"Southeast","service_line":"PCOS","bookings":271,"providers":30,"bpp":9.0,"load_index":0.9,"gap":-2.9},"Southeast|Fertility":{"region":"Southeast","service_line":"Fertility","bookings":378,"providers":21,"bpp":18.0,"load_index":1.8,"gap":16.8},"South Central|Everyday Rx":{"region":"South Central","service_line":"Everyday Rx","bookings":397,"providers":23,"bpp":17.3,"load_index":1.73,"gap":16.7},"South Central|Mental Health Rx":{"region":"South Central","service_line":"Mental Health Rx","bookings":449,"providers":34,"bpp":13.2,"load_index":1.32,"gap":10.9},"South Central|Success by Sesame (Weight Loss)":{"region":"South Central","service_line":"Success by Sesame (Weight Loss)","bookings":635,"providers":23,"bpp":27.6,"load_index":2.76,"gap":40.5},"South Central|Women's Health":{"region":"South Central","service_line":"Women's Health","bookings":233,"providers":19,"bpp":12.3,"load_index":1.23,"gap":4.3},"South Central|PCOS":{"region":"South Central","service_line":"PCOS","bookings":118,"providers":14,"bpp":8.4,"load_index":0.84,"gap":-2.2},"South Central|Fertility":{"region":"South Central","service_line":"Fertility","bookings":180,"providers":6,"bpp":30.0,"load_index":3.0,"gap":12.0}}};
+const RAW_CSV = "state,service_line,bookings_last_month,active_providers\nCA,Everyday Rx,372,17\nCA,Mental Health Rx,410,62\nCA,Success by Sesame (Weight Loss),605,45\nCA,Women's Health,171,14\nCA,PCOS,97,9\nCA,Fertility,175,6\nTX,Everyday Rx,287,17\nTX,Mental Health Rx,307,23\nTX,Success by Sesame (Weight Loss),491,14\nTX,Women's Health,176,14\nTX,PCOS,80,10\nTX,Fertility,125,4\nFL,Everyday Rx,234,14\nFL,Mental Health Rx,300,24\nFL,Success by Sesame (Weight Loss),330,12\nFL,Women's Health,124,12\nFL,PCOS,74,9\nFL,Fertility,105,5\nNY,Everyday Rx,155,8\nNY,Mental Health Rx,186,23\nNY,Success by Sesame (Weight Loss),254,17\nNY,Women's Health,99,8\nNY,PCOS,53,5\nNY,Fertility,105,7\nPA,Everyday Rx,99,6\nPA,Mental Health Rx,129,9\nPA,Success by Sesame (Weight Loss),227,15\nPA,Women's Health,71,7\nPA,PCOS,47,5\nPA,Fertility,51,2\nIL,Everyday Rx,101,5\nIL,Mental Health Rx,176,15\nIL,Success by Sesame (Weight Loss),166,11\nIL,Women's Health,64,6\nIL,PCOS,38,3\nIL,Fertility,50,2\nOH,Everyday Rx,110,7\nOH,Mental Health Rx,131,8\nOH,Success by Sesame (Weight Loss),207,13\nOH,Women's Health,52,4\nOH,PCOS,30,3\nOH,Fertility,59,2\nGA,Everyday Rx,93,6\nGA,Mental Health Rx,130,11\nGA,Success by Sesame (Weight Loss),183,5\nGA,Women's Health,64,6\nGA,PCOS,31,3\nGA,Fertility,40,2\nNC,Everyday Rx,116,8\nNC,Mental Health Rx,113,8\nNC,Success by Sesame (Weight Loss),133,6\nNC,Women's Health,53,5\nNC,PCOS,35,3\nNC,Fertility,54,3\nMI,Everyday Rx,91,4\nMI,Mental Health Rx,107,6\nMI,Success by Sesame (Weight Loss),171,13\nMI,Women's Health,61,5\nMI,PCOS,25,3\nMI,Fertility,53,2\nNJ,Everyday Rx,67,4\nNJ,Mental Health Rx,121,7\nNJ,Success by Sesame (Weight Loss),132,9\nNJ,Women's Health,44,4\nNJ,PCOS,28,3\nNJ,Fertility,42,2\nVA,Everyday Rx,71,5\nVA,Mental Health Rx,108,8\nVA,Success by Sesame (Weight Loss),126,7\nVA,Women's Health,41,3\nVA,PCOS,28,3\nVA,Fertility,34,2\nWA,Everyday Rx,61,4\nWA,Mental Health Rx,105,6\nWA,Success by Sesame (Weight Loss),99,7\nWA,Women's Health,36,3\nWA,PCOS,29,3\nWA,Fertility,34,2\nAZ,Everyday Rx,57,3\nAZ,Mental Health Rx,83,6\nAZ,Success by Sesame (Weight Loss),104,4\nAZ,Women's Health,48,3\nAZ,PCOS,22,2\nAZ,Fertility,38,2\nTN,Everyday Rx,62,3\nTN,Mental Health Rx,74,5\nTN,Success by Sesame (Weight Loss),121,8\nTN,Women's Health,44,4\nTN,PCOS,17,2\nTN,Fertility,36,3\nMA,Everyday Rx,72,3\nMA,Mental Health Rx,81,11\nMA,Success by Sesame (Weight Loss),81,5\nMA,Women's Health,45,3\nMA,PCOS,24,2\nMA,Fertility,30,2\nIN,Everyday Rx,63,4\nIN,Mental Health Rx,68,5\nIN,Success by Sesame (Weight Loss),120,8\nIN,Women's Health,37,4\nIN,PCOS,17,2\nIN,Fertility,31,2\nMO,Everyday Rx,67,3\nMO,Mental Health Rx,62,5\nMO,Success by Sesame (Weight Loss),96,5\nMO,Women's Health,27,3\nMO,PCOS,17,2\nMO,Fertility,29,1\nMD,Everyday Rx,56,4\nMD,Mental Health Rx,63,5\nMD,Success by Sesame (Weight Loss),78,5\nMD,Women's Health,36,3\nMD,PCOS,17,2\nMD,Fertility,22,1\nWI,Everyday Rx,64,3\nWI,Mental Health Rx,60,4\nWI,Success by Sesame (Weight Loss),101,8\nWI,Women's Health,37,3\nWI,PCOS,15,2\nWI,Fertility,28,2\nCO,Everyday Rx,56,2\nCO,Mental Health Rx,78,5\nCO,Success by Sesame (Weight Loss),91,7\nCO,Women's Health,26,2\nCO,PCOS,15,2\nCO,Fertility,23,2\nMN,Everyday Rx,44,3\nMN,Mental Health Rx,59,4\nMN,Success by Sesame (Weight Loss),96,7\nMN,Women's Health,25,2\nMN,PCOS,16,1\nMN,Fertility,28,1\nSC,Everyday Rx,52,3\nSC,Mental Health Rx,60,3\nSC,Success by Sesame (Weight Loss),61,5\nSC,Women's Health,33,3\nSC,PCOS,19,2\nSC,Fertility,20,1\nAL,Everyday Rx,54,3\nAL,Mental Health Rx,69,6\nAL,Success by Sesame (Weight Loss),63,4\nAL,Women's Health,22,2\nAL,PCOS,18,2\nAL,Fertility,24,1\nLA,Everyday Rx,48,3\nLA,Mental Health Rx,61,5\nLA,Success by Sesame (Weight Loss),52,4\nLA,Women's Health,22,2\nLA,PCOS,16,2\nLA,Fertility,23,1\nKY,Everyday Rx,33,2\nKY,Mental Health Rx,61,4\nKY,Success by Sesame (Weight Loss),73,5\nKY,Women's Health,22,2\nKY,PCOS,12,1\nKY,Fertility,17,1\nOR,Everyday Rx,45,2\nOR,Mental Health Rx,52,4\nOR,Success by Sesame (Weight Loss),73,5\nOR,Women's Health,27,2\nOR,PCOS,15,1\nOR,Fertility,22,1\nOK,Everyday Rx,34,2\nOK,Mental Health Rx,42,3\nOK,Success by Sesame (Weight Loss),57,3\nOK,Women's Health,22,2\nOK,PCOS,13,1\nOK,Fertility,21,1\nCT,Everyday Rx,35,2\nCT,Mental Health Rx,39,5\nCT,Success by Sesame (Weight Loss),47,3\nCT,Women's Health,22,2\nCT,PCOS,10,1\nCT,Fertility,15,1\nUT,Everyday Rx,25,1\nUT,Mental Health Rx,47,4\nUT,Success by Sesame (Weight Loss),57,4\nUT,Women's Health,16,1\nUT,PCOS,8,1\nUT,Fertility,14,1\nIA,Everyday Rx,28,2\nIA,Mental Health Rx,32,2\nIA,Success by Sesame (Weight Loss),54,4\nIA,Women's Health,14,1\nIA,PCOS,10,1\nIA,Fertility,13,1\nNV,Everyday Rx,31,2\nNV,Mental Health Rx,32,2\nNV,Success by Sesame (Weight Loss),40,3\nNV,Women's Health,19,1\nNV,PCOS,9,1\nNV,Fertility,12,1\nAR,Everyday Rx,28,1\nAR,Mental Health Rx,39,3\nAR,Success by Sesame (Weight Loss),35,2\nAR,Women's Health,13,1\nAR,PCOS,9,1\nAR,Fertility,11,0\nMS,Everyday Rx,28,2\nMS,Mental Health Rx,35,3\nMS,Success by Sesame (Weight Loss),49,3\nMS,Women's Health,17,1\nMS,PCOS,10,1\nMS,Fertility,15,1\nKS,Everyday Rx,23,1\nKS,Mental Health Rx,36,3\nKS,Success by Sesame (Weight Loss),42,3\nKS,Women's Health,14,1\nKS,PCOS,8,1\nKS,Fertility,12,1\nNM,Everyday Rx,20,1\nNM,Mental Health Rx,19,1\nNM,Success by Sesame (Weight Loss),30,2\nNM,Women's Health,9,1\nNM,PCOS,7,1\nNM,Fertility,10,1\nNE,Everyday Rx,17,1\nNE,Mental Health Rx,21,2\nNE,Success by Sesame (Weight Loss),33,3\nNE,Women's Health,10,1\nNE,PCOS,6,1\nNE,Fertility,7,1\nID,Everyday Rx,15,1\nID,Mental Health Rx,21,1\nID,Success by Sesame (Weight Loss),26,1\nID,Women's Health,10,1\nID,PCOS,5,1\nID,Fertility,6,1\nWV,Everyday Rx,12,1\nWV,Mental Health Rx,18,1\nWV,Success by Sesame (Weight Loss),28,2\nWV,Women's Health,10,1\nWV,PCOS,5,1\nWV,Fertility,8,0\nHI,Everyday Rx,14,1\nHI,Mental Health Rx,18,2\nHI,Success by Sesame (Weight Loss),17,1\nHI,Women's Health,6,0\nHI,PCOS,4,0\nHI,Fertility,7,1\nNH,Everyday Rx,13,1\nNH,Mental Health Rx,18,2\nNH,Success by Sesame (Weight Loss),16,1\nNH,Women's Health,6,1\nNH,PCOS,5,0\nNH,Fertility,5,1\nME,Everyday Rx,10,1\nME,Mental Health Rx,18,1\nME,Success by Sesame (Weight Loss),16,1\nME,Women's Health,8,1\nME,PCOS,4,1\nME,Fertility,5,1\nMT,Everyday Rx,8,1\nMT,Mental Health Rx,13,1\nMT,Success by Sesame (Weight Loss),17,1\nMT,Women's Health,6,0\nMT,PCOS,0,0\nMT,Fertility,4,0\nRI,Everyday Rx,8,0\nRI,Mental Health Rx,12,1\nRI,Success by Sesame (Weight Loss),18,1\nRI,Women's Health,5,0\nRI,PCOS,0,0\nRI,Fertility,4,0\nDE,Everyday Rx,9,1\nDE,Mental Health Rx,13,1\nDE,Success by Sesame (Weight Loss),12,1\nDE,Women's Health,4,1\nDE,PCOS,3,0\nDE,Fertility,0,0\nSD,Everyday Rx,8,1\nSD,Mental Health Rx,9,1\nSD,Success by Sesame (Weight Loss),12,1\nSD,Women's Health,5,1\nSD,PCOS,0,0\nSD,Fertility,1,1\nND,Everyday Rx,8,0\nND,Mental Health Rx,9,1\nND,Success by Sesame (Weight Loss),11,1\nND,Women's Health,3,0\nND,PCOS,0,0\nND,Fertility,3,1\nAK,Everyday Rx,7,0\nAK,Mental Health Rx,7,1\nAK,Success by Sesame (Weight Loss),9,1\nAK,Women's Health,4,0\nAK,PCOS,2,1\nAK,Fertility,2,1\nDC,Everyday Rx,4,1\nDC,Mental Health Rx,7,0\nDC,Success by Sesame (Weight Loss),10,1\nDC,Women's Health,4,0\nDC,PCOS,2,1\nDC,Fertility,3,1\nVT,Everyday Rx,4,1\nVT,Mental Health Rx,6,0\nVT,Success by Sesame (Weight Loss),9,1\nVT,Women's Health,0,0\nVT,PCOS,0,0\nVT,Fertility,3,0\nWY,Everyday Rx,5,1\nWY,Mental Health Rx,7,1\nWY,Success by Sesame (Weight Loss),9,1\nWY,Women's Health,2,1\nWY,PCOS,0,0\nWY,Fertility,0,0\n";
+const fmt = n => n==null?"–":(Math.round(n*10)/10).toLocaleString();
+const shortSvc = s => META.svc_short[s] || s;
+
+/* ---------- diverging color: load index around 1 ---------- */
+function loadColor(li){
+  if(li==null) return getCSS('--grid');
+  // clamp domain 0.4 .. 2.4, midpoint 1.0
+  const cl = Math.max(0.4, Math.min(2.4, li));
+  if(cl >= 1){
+    const t = (cl-1)/(2.4-1);            // 0..1 into red
+    return mix([240,239,236],[208,59,59], Math.min(1,t*1.05));
+  } else {
+    const t = (1-cl)/(1-0.4);            // 0..1 into blue
+    return mix([240,239,236],[42,120,214], Math.min(1,t*1.05));
+  }
+}
+function mix(a,b,t){return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`}
+function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v)}
+
+const STATUS = {
+  "Under-supplied":{c:"var(--crit)",bg:"rgba(208,59,59,.12)"},
+  "No coverage":{c:"var(--crit)",bg:"rgba(208,59,59,.18)"},
+  "Over-supplied":{c:"var(--blue)",bg:"rgba(42,120,214,.12)"},
+  "Balanced":{c:"var(--muted)",bg:"rgba(137,135,129,.12)"}
+};
+
+/* ---------- targets & recompute ---------- */
+const TARGETS_SERVICE = {"Everyday Rx":16.5,"Fertility":16.25,"Mental Health Rx":13.0,"PCOS":9.0,"Success by Sesame (Weight Loss)":15.0,"Women's Health":11.0};
+let MODE = 'flat';   // 'flat' | 'service'
+let FLAT = 10;       // active flat target when MODE==='flat'
+const targetFor = svc => MODE==='service' ? TARGETS_SERVICE[svc] : FLAT;
+const r1 = x => Math.round(x*10)/10;
+const r2 = x => Math.round(x*100)/100;
+const SVC_TARGET_TXT = "Everyday Rx 16.5, Mental Health 13, Weight Loss 15, Women's Health 11, Fertility 16.25, PCOS 9";
+
+function recompute(){
+  DATA.forEach(r=>{
+    const t = targetFor(r.service_line);
+    r.target_bpp = t;
+    r.bpp = r.active_providers>0 ? r1(r.bookings_last_month/r.active_providers) : null;
+    r.load_index = r.active_providers>0 ? r2(r.bookings_last_month/r.active_providers/t) : null;
+    r.gap = r1(r.bookings_last_month/t - r.active_providers);
+    r.status = (r.active_providers===0 && r.bookings_last_month>0) ? 'No coverage'
+             : r.gap>=1 ? 'Under-supplied'
+             : r.gap<=-1 ? 'Over-supplied' : 'Balanced';
+  });
+}
+let RC = {};
+function buildRegionCells(){
+  const agg={};
+  DATA.forEach(r=>{
+    const k=r.region+"|"+r.service_line;
+    (agg[k]=agg[k]||{region:r.region,service_line:r.service_line,bookings:0,providers:0});
+    agg[k].bookings+=r.bookings_last_month; agg[k].providers+=r.active_providers;
+  });
+  const cells={};
+  Object.values(agg).forEach(c=>{
+    const t=targetFor(c.service_line); c.target=t;
+    c.bpp = c.providers>0 ? r1(c.bookings/c.providers) : null;
+    c.load_index = c.providers>0 ? r2(c.bookings/c.providers/t) : null;
+    c.gap = r1(c.bookings/t - c.providers);
+    cells[c.region+"|"+c.service_line]=c;
+  });
+  RC = cells;
+}
+
+/* ---------- KPIs ---------- */
+const totB = DATA.reduce((s,r)=>s+r.bookings_last_month,0);
+const totP = DATA.reduce((s,r)=>s+r.active_providers,0);
+function renderKPIs(){
+  const under=DATA.filter(r=>r.status==="Under-supplied").length;
+  const over=DATA.filter(r=>r.status==="Over-supplied").length;
+  const nocov=DATA.filter(r=>r.status==="No coverage").length;
+  const needSum=Math.round(DATA.filter(r=>r.gap>0).reduce((s,r)=>s+r.gap,0));
+  const slackSum=Math.round(-DATA.filter(r=>r.gap<0).reduce((s,r)=>s+r.gap,0));
+  const kpis=[
+    {v:totB.toLocaleString(),l:"Bookings last month",h:"across all segments"},
+    {v:totP.toLocaleString(),l:"Active providers",h:"marketplace-wide"},
+    {v:under,l:"Under-supplied segments",h:`~${needSum} providers short in total`},
+    {v:over,l:"Over-supplied segments",h:`~${slackSum} providers of slack`},
+    {v:nocov,l:"No-coverage segments",h:"live demand, 0 providers"}
+  ];
+  document.getElementById('kpis').innerHTML = kpis.map(k=>
+    `<div class="kpi"><div class="v">${k.v}</div><div class="l">${k.l}</div><div class="h">${k.h}</div></div>`).join('');
+}
+
+/* ---------- recruit / over cards ---------- */
+const rails=["var(--crit)","var(--serious)","var(--warn)"];
+function cardNote(r){
+  const svc = shortSvc(r.service_line);
+  if(r.state==="TX"&&svc==="Weight Loss") return "Largest single pool of unmet demand in the marketplace — 14 clinicians absorbing 491 bookings. Top recruiting priority under either target.";
+  if(r.state==="FL"&&svc==="Weight Loss") return "Second-largest weight-loss shortfall — a thin 12-provider bench well above healthy load.";
+  if(r.state==="GA"&&svc==="Weight Loss") return "Highest load intensity of any sizeable segment — 5 providers carrying 183 bookings. One departure and coverage collapses.";
+  if(r.state==="CA"&&svc==="Everyday Rx") return "High-volume everyday-Rx market — 372 bookings on 17 providers. Surfaces strongly under a flat-10 target.";
+  return `${r.bpp} bookings per provider vs. a target of ${r.target_bpp} — about ${r.load_index}× load.`;
+}
+function overNote(r){
+  if(r.state==="CA"&&r.service_line.includes("Mental Health")) return "The standout glut: 62 clinicians splitting 410 bookings (~7 each). Providers here likely aren't getting enough volume to stay engaged — pause recruiting, redistribute, or cross-list to nearby states.";
+  if(r.state==="NY"&&r.service_line.includes("Mental Health")) return "23 providers at half the healthy load. Slow or freeze new mental-health onboarding here.";
+  return "Well below target load — providers underutilized. Hold recruiting.";
+}
+function renderRecruit(){
+  const top=[...DATA].sort((a,b)=>b.gap-a.gap).slice(0,3);
+  document.getElementById('recruitCards').innerHTML = top.map((r,i)=>`
+    <div class="card"><div class="rail" style="background:${rails[i]}"></div>
+      <div class="rank">#${i+1} · RECRUIT</div>
+      <div class="seg">${r.state} · ${shortSvc(r.service_line)}</div>
+      <span class="chip" style="background:rgba(208,59,59,.12);color:var(--crit)">${r.load_index}× normal load</span>
+      <div class="metric">
+        <div class="m"><div class="mv">${r.bookings_last_month}</div><div class="ml">bookings</div></div>
+        <div class="m"><div class="mv">${r.active_providers}</div><div class="ml">providers</div></div>
+        <div class="m"><div class="mv">+${Math.round(r.gap)}</div><div class="ml">providers short</div></div>
+      </div>
+      <div class="note">${cardNote(r)}</div>
+    </div>`).join('');
+  const mentions=[...DATA].sort((a,b)=>b.gap-a.gap).slice(3,7);
+  const tail = MODE==='flat'
+    ? `. At a flat target of ${FLAT}, high-volume Weight Loss, Everyday Rx, and Fertility markets dominate the shortfall; Mental Health is the main line running slack.`
+    : ". With service-line targets, Weight Loss and Fertility are the durable gaps; Everyday Rx and Mental Health tighten toward balance.";
+  document.getElementById('mentions').innerHTML = "Also stretched: " +
+    mentions.map(r=>`<b>${r.state} ${shortSvc(r.service_line)}</b> (+${Math.round(r.gap)})`).join(", ") + tail;
+}
+function renderOver(){
+  const top=[...DATA].sort((a,b)=>a.gap-b.gap).slice(0,3);
+  document.getElementById('overCards').innerHTML = top.map(r=>`
+    <div class="card"><div class="rail" style="background:var(--blue)"></div>
+      <div class="rank" style="color:var(--blue)">OVER-SUPPLIED</div>
+      <div class="seg">${r.state} · ${shortSvc(r.service_line)}</div>
+      <span class="chip" style="background:rgba(42,120,214,.12);color:var(--blue)">${r.load_index}× normal load</span>
+      <div class="metric">
+        <div class="m"><div class="mv">${r.bookings_last_month}</div><div class="ml">bookings</div></div>
+        <div class="m"><div class="mv">${r.active_providers}</div><div class="ml">providers</div></div>
+        <div class="m"><div class="mv">${Math.round(r.gap)}</div><div class="ml">providers of slack</div></div>
+      </div>
+      <div class="note">${overNote(r)}</div>
+    </div>`).join('');
+}
+
+/* ---------- state heatmap ---------- */
+const byKey={}; DATA.forEach(r=>byKey[r.state+"|"+r.service_line]=r);
+function renderStateHeatmap(){
+  let hm = "<tr><th class='svc'></th>" + META.states_ordered.map(s=>`<th class='st'>${s}</th>`).join("") + "</tr>";
+  META.services.forEach(sv=>{
+    hm += `<tr><th class='svc'>${shortSvc(sv)}</th>`;
+    META.states_ordered.forEach(st=>{
+      const r = byKey[st+"|"+sv];
+      if(!r || r.active_providers===0){
+        hm += `<td class='empty' data-k='${st}|${sv}'>${r&&r.bookings_last_month>0?'!':''}</td>`;
+      } else {
+        hm += `<td data-k='${st}|${sv}' style="background:${loadColor(r.load_index)}">${r.load_index}</td>`;
+      }
+    });
+    hm += "</tr>";
+  });
+  document.getElementById('heatmap').innerHTML = hm;
+  document.getElementById('legendScale').innerHTML = [0.4,0.55,0.7,0.85,1].map(v=>`<span style="background:${loadColor(v)}"></span>`).join('');
+  document.getElementById('legendScale2').innerHTML = [1,1.3,1.6,1.9,2.3].map(v=>`<span style="background:${loadColor(v)}"></span>`).join('');
+}
+
+/* tooltip (attached once) */
+const tip = document.getElementById('tip');
+function showTip(html,e){tip.innerHTML=html;tip.style.opacity=1;moveTip(e);}
+function moveTip(e){const p=12;let x=e.clientX+p,y=e.clientY+p;
+  if(x+tip.offsetWidth>innerWidth)x=e.clientX-tip.offsetWidth-p;
+  if(y+tip.offsetHeight>innerHeight)y=e.clientY-tip.offsetHeight-p;
+  tip.style.left=x+'px';tip.style.top=y+'px';}
+function hideTip(){tip.style.opacity=0;}
+document.getElementById('heatmap').addEventListener('mousemove',e=>{
+  const td=e.target.closest('td'); if(!td||!td.dataset.k){hideTip();return;}
+  const r=byKey[td.dataset.k]; if(!r){hideTip();return;}
+  showTip(`<b>${r.state} · ${shortSvc(r.service_line)}</b><br>${r.bookings_last_month} bookings · ${r.active_providers} providers<br>${r.bpp==null?'—':r.bpp} per provider vs ${r.target_bpp} target<br>Load ${r.load_index==null?'—':r.load_index}× · gap ${r.gap>0?'+':''}${Math.round(r.gap)} · <b>${r.status}</b>`,e);
+});
+document.getElementById('heatmap').addEventListener('mouseleave',hideTip);
+
+/* ---------- region heatmap ---------- */
+function renderRegionHeatmap(){
+  let rhm = "<tr><th class='svc'></th>" + REGION.region_order.map(rg=>`<th class='st rst'>${rg}</th>`).join("") + "</tr>";
+  META.services.forEach(sv=>{
+    rhm += `<tr><th class='svc'>${shortSvc(sv)}</th>`;
+    REGION.region_order.forEach(rg=>{
+      const c = RC[rg+"|"+sv];
+      if(!c || c.load_index==null){ rhm += `<td class='empty' data-rk='${rg}|${sv}'></td>`; }
+      else { rhm += `<td class='rcell' data-rk='${rg}|${sv}' style="background:${loadColor(c.load_index)}">${c.load_index}</td>`; }
+    });
+    rhm += "</tr>";
+  });
+  document.getElementById('rheatmap').innerHTML = rhm;
+}
+document.getElementById('rheatmap').addEventListener('mousemove',e=>{
+  const td=e.target.closest('td'); if(!td||!td.dataset.rk){hideTip();return;}
+  const c=RC[td.dataset.rk]; if(!c){hideTip();return;}
+  showTip(`<b>${c.region} · ${shortSvc(c.service_line)}</b><br>${c.bookings} bookings · ${c.providers} providers<br>${c.bpp==null?'—':c.bpp} per provider vs ${c.target} target<br>Load ${c.load_index==null?'—':c.load_index}× · gap ${c.gap>0?'+':''}${Math.round(c.gap)}`,e);
+});
+document.getElementById('rheatmap').addEventListener('mouseleave',hideTip);
+
+/* ---------- risks (mode-independent: based on raw provider counts) ---------- */
+function renderRisks(){
+  const totBk = DATA.reduce((s,r)=>s+r.bookings_last_month,0);
+  const nc = DATA.filter(r=>r.active_providers===0 && r.bookings_last_month>0)
+                 .sort((a,b)=>b.bookings_last_month-a.bookings_last_month);
+  const ncBk = nc.reduce((s,r)=>s+r.bookings_last_month,0);
+  const sp = DATA.filter(r=>r.active_providers===1)
+                 .sort((a,b)=>b.bookings_last_month-a.bookings_last_month);
+  const spBk = sp.reduce((s,r)=>s+r.bookings_last_month,0);
+  const spStates = new Set(sp.map(r=>r.state)).size;
+  const row = r => `<div class="risk-row"><span>${r.state} · ${shortSvc(r.service_line)}</span><span class="rb">${r.bookings_last_month}</span></div>`;
+  const np = document.getElementById('ncPanel');
+  np.className = 'risk-panel nocov';
+  np.innerHTML = `
+    <div class="risk-head"><span class="risk-dot" style="background:var(--crit)"></span>No coverage — live demand, zero providers</div>
+    <div class="risk-stat"><b>${nc.length}</b> segments · <b>${ncBk}</b> bookings / month with nowhere to book</div>
+    <div class="risk-sub">Each is a patient who searched and found no one. Small individually, but 100% unmet — the sharpest form of under-supply, concentrated in small states and women's-health lines.</div>
+    <div class="risk-collbl"><span>Segment</span><span>Bookings / mo</span></div>
+    <div class="risk-list">${nc.map(row).join('')}</div>`;
+  const fp = document.getElementById('spPanel');
+  fp.className = 'risk-panel frag';
+  const topN = 14;
+  fp.innerHTML = `
+    <div class="risk-head"><span class="risk-dot" style="background:var(--serious)"></span>Single-provider markets — one departure from zero</div>
+    <div class="risk-stat"><b>${sp.length}</b> segments across ${spStates} states run on a single provider · <b>${spBk.toLocaleString()}</b> bookings / month (${(spBk/totBk*100).toFixed(1)}%) ride on one person</div>
+    <div class="risk-sub">If that provider churns, the market drops to zero coverage overnight. Highest-volume single-provider markets — the ones to shore up first:</div>
+    <div class="risk-collbl"><span>Segment</span><span>Bookings / mo</span></div>
+    <div class="risk-list">${sp.slice(0,topN).map(row).join('')}<div class="risk-more">…and ${sp.length-topN} more single-provider segments</div></div>`;
+}
+
+/* ---------- callout, subtitle, mode note ---------- */
+function updateCallout(){
+  const flat = MODE==='flat';
+  const divisor = flat ? String(FLAT) : 'line&nbsp;target';
+  const tx = DATA.find(r=>r.state==='TX'&&r.service_line.indexOf('Weight')>=0);
+  const t = tx.target_bpp;
+  const targetDesc = flat
+    ? `a flat <b>target of ${FLAT} bookings per provider per month</b> &mdash; the healthy monthly load one clinician is assumed to carry, held the same for every line`
+    : "each service line's own <b>target</b> &mdash; the typical monthly load a provider in that line carries (its median bookings per provider)";
+  const targetTail = flat ? '' :
+    `<br><span style="color:var(--muted)">Line targets: ${SVC_TARGET_TXT}.</span>`;
+  document.getElementById('calcBody').innerHTML = `
+    <p class="lead"><b>Service line</b> = one of Sesame's six care categories (Everyday&nbsp;Rx, Mental&nbsp;Health, Weight&nbsp;Loss, Women's&nbsp;Health, PCOS, Fertility). A <b>segment</b> is one service line in one state (e.g. "TX &middot; Weight Loss") &mdash; the unit every figure here is computed on. Each segment gets a <b>Load Index</b>: its bookings per active provider measured against ${targetDesc}.${targetTail}</p>
+    <div class="calc-grid">
+      <div class="calc-item"><div class="lbl">Load index — how stretched</div>
+        <div class="formula">load index <span class="op">=</span> ( bookings <span class="op">&divide;</span> active&nbsp;providers ) <span class="op">&divide;</span> ${divisor}</div></div>
+      <div class="calc-item"><div class="lbl">Provider gap — recruit vs. slack</div>
+        <div class="formula">gap <span class="op">=</span> ( bookings <span class="op">&divide;</span> ${divisor} ) <span class="op">&minus;</span> active&nbsp;providers</div>
+        <div class="mini">the number of providers to add (or spare) to hit the target</div></div>
+      <div class="calc-item"><div class="lbl">Status — the label</div>
+        <div class="formula">gap <span class="op">&ge;</span> +1 &rarr; Under-supplied<br>gap <span class="op">&le;</span> &minus;1 &rarr; Over-supplied<br>else &rarr; Balanced · (0 providers &rarr; No coverage)</div></div>
+    </div>
+    <div class="statlist">
+      <div><span class="sdot" style="background:var(--crit)"></span><b>Under-supplied</b> &mdash; each provider is carrying <i>more</i> than the target load (Load Index &gt; 1, gap of at least one provider). Patients wait longer or can't book; this is where we recruit.</div>
+      <div><span class="sdot" style="background:var(--muted)"></span><b>Balanced</b> &mdash; supply is within one provider of the target (Load Index near 1). Leave it alone.</div>
+      <div><span class="sdot" style="background:var(--blue)"></span><b>Over-supplied</b> &mdash; providers sit <i>below</i> the target load (Load Index &lt; 1, at least one provider of slack). They may not get enough volume to stay engaged; hold or slow recruiting, or redistribute.</div>
+      <div><span class="sdot" style="background:var(--crit)"></span><b>No coverage</b> &mdash; there are live bookings but zero active providers: demand no one can serve.</div>
+    </div>
+    <p class="eg"><b>Worked example — TX Weight Loss:</b> 491 bookings &divide; 14 providers = <code>35.1</code> per provider, so Load Index = 35.1 &divide; ${t} = <code>${r1(35.1/t)}&times;</code> the target; gap = (491 &divide; ${t}) &minus; 14 = <code>+${r1(491/t-14)}</code> providers short &rarr; <b>Under-supplied</b>.</p>`;
+}
+function updateModeNote(){
+  document.getElementById('modeNote').innerHTML = MODE==='flat'
+    ? `Flat target — every line held to the same ${FLAT} bookings-per-provider bar. Simple, but it judges every service the same; raise the bar (15, 18) and fewer segments read as under-supplied.`
+    : "Separate method — each line is scored against its <i>own</i> typical throughput (median bookings per provider), so services are compared like-for-like instead of on one shared number.";
+}
+
+/* ---------- multi-select dropdowns ---------- */
+function makeMultiSelect(mountId, allLabel, opts, onChange){
+  const wrap=document.getElementById(mountId);
+  const sel=new Set();
+  const btn=document.createElement('button'); btn.type='button'; btn.className='ms-btn';
+  const panel=document.createElement('div'); panel.className='ms-panel';
+  function paint(){
+    btn.innerHTML = (sel.size===0?allLabel:sel.size+' selected') + ' <span class="ms-car">▾</span>';
+    btn.classList.toggle('active', sel.size>0);
+  }
+  opts.forEach(o=>{
+    const row=document.createElement('label'); row.className='ms-opt';
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.value=o.value;
+    cb.addEventListener('change',()=>{ cb.checked?sel.add(o.value):sel.delete(o.value); paint(); onChange(); });
+    const sp=document.createElement('span'); sp.textContent=o.text;
+    row.appendChild(cb); row.appendChild(sp); panel.appendChild(row);
+  });
+  const clr=document.createElement('button'); clr.type='button'; clr.className='ms-clear'; clr.textContent='Clear';
+  clr.addEventListener('click',e=>{ e.stopPropagation(); sel.clear(); panel.querySelectorAll('input').forEach(c=>c.checked=false); paint(); onChange(); });
+  panel.appendChild(clr);
+  btn.addEventListener('click',e=>{ e.stopPropagation();
+    document.querySelectorAll('.ms-panel.open').forEach(p=>{if(p!==panel)p.classList.remove('open');});
+    panel.classList.toggle('open'); });
+  panel.addEventListener('click',e=>e.stopPropagation());
+  wrap.appendChild(btn); wrap.appendChild(panel); paint();
+  return { selected:()=>sel };
+}
+document.addEventListener('click',()=>document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open')));
+
+/* ---------- data table ---------- */
+const msRegion=makeMultiSelect('msRegion','All regions', REGION.region_order.map(r=>({value:r,text:r})), ()=>render());
+const msSvc=makeMultiSelect('msSvc','All service lines', META.services.map(s=>({value:s,text:shortSvc(s)})), ()=>render());
+const msStatus=makeMultiSelect('msStatus','All statuses', ['Under-supplied','No coverage','Balanced','Over-supplied'].map(s=>({value:s,text:s})), ()=>render());
+let sortK='gap', sortDir=-1;
+function render(){
+  const maxAbsGap = Math.max(...DATA.map(r=>Math.abs(r.gap)),1);
+  const q=document.getElementById('search').value.trim().toUpperCase();
+  const rg=msRegion.selected(), sv=msSvc.selected(), stt=msStatus.selected();
+  let rows=DATA.filter(r=>(!q||r.state.includes(q))
+    &&(rg.size===0||rg.has(r.region))
+    &&(sv.size===0||sv.has(r.service_line))
+    &&(stt.size===0||stt.has(r.status)));
+  rows.sort((a,b)=>{let x=a[sortK],y=b[sortK];
+    if(typeof x==='string')return x.localeCompare(y)*sortDir;
+    return ((x==null?-1e9:x)-(y==null?-1e9:y))*sortDir;});
+  const tb=document.querySelector('#dtable tbody');
+  tb.innerHTML=rows.map(r=>{
+    const st=STATUS[r.status];
+    const w=Math.abs(r.gap)/maxAbsGap*80;
+    const bcol=r.gap>=0?'var(--crit)':'var(--blue)';
+    const bar=`<span class="bar" style="width:${Math.max(2,w)}px;background:${bcol};opacity:${r.status==='Balanced'?0.35:0.9}"></span>`;
+    return `<tr>
+      <td>${r.state}</td>
+      <td style="color:var(--text-secondary)">${r.region}</td>
+      <td>${shortSvc(r.service_line)}</td>
+      <td class="num">${r.bookings_last_month}</td>
+      <td class="num">${r.active_providers}</td>
+      <td class="num">${r.bpp==null?'–':r.bpp}</td>
+      <td class="num">${r.load_index==null?'–':r.load_index}</td>
+      <td class="num barcell">${r.gap>0?'+':''}${r.gap.toFixed(1)} ${bar}</td>
+      <td><span class="stat" style="color:${st.c}"><span class="dot" style="background:${st.c}"></span>${r.status}</span></td>
+    </tr>`;}).join('');
+  document.getElementById('rowcount').textContent=`${rows.length} of ${DATA.length} segments`;
+}
+document.querySelectorAll('#dtable th').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.k; if(sortK===k)sortDir*=-1;else{sortK=k;sortDir=(k==='state'||k==='service_line')?1:-1;}
+  document.querySelectorAll('#dtable th').forEach(t=>{const s=t.querySelector('.ar');if(s)s.remove();});
+  const ar=document.createElement('span');ar.className='ar';ar.textContent=sortDir<0?'▼':'▲';th.appendChild(ar);
+  render();
+}));
+document.getElementById('search').addEventListener('input',render);
+
+/* ---------- CSV download ---------- */
+document.getElementById('csvBtn').addEventListener('click',()=>{
+  const blob=new Blob([RAW_CSV],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='sesame_ps_dataset.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+});
+
+/* ---------- theme ---------- */
+const tb2=document.getElementById('themeBtn');
+tb2.addEventListener('click',()=>{
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');
+  tb2.textContent=d?'Dark mode':'Light mode';
+  renderStateHeatmap(); renderRegionHeatmap(); render();
+});
+
+/* ---------- master rerender + target toggle ---------- */
+function rerenderAll(){
+  recompute();
+  buildRegionCells();
+  renderKPIs();
+  renderRecruit();
+  renderOver();
+  renderStateHeatmap();
+  renderRegionHeatmap();
+  renderRisks();
+  render();
+  updateCallout();
+  updateModeNote();
+}
+const flatBtns=document.querySelectorAll('#flatToggle button');
+const svcBtns=document.querySelectorAll('#svcToggle button');
+flatBtns.forEach(b=>b.addEventListener('click',()=>{
+  MODE='flat'; FLAT=+b.dataset.flat;
+  flatBtns.forEach(x=>x.classList.toggle('on',x===b));
+  svcBtns.forEach(x=>x.classList.remove('on'));
+  rerenderAll();
+}));
+svcBtns.forEach(b=>b.addEventListener('click',()=>{
+  MODE='service';
+  svcBtns.forEach(x=>x.classList.add('on'));
+  flatBtns.forEach(x=>x.classList.remove('on'));
+  rerenderAll();
+}));
+
+/* collapsible Load Index callout (collapsed by default) */
+document.getElementById('calcToggle').addEventListener('click',()=>{
+  const box=document.getElementById('calcBox');
+  const open=box.classList.toggle('open');
+  document.getElementById('calcToggle').setAttribute('aria-expanded', open);
+});
+
+rerenderAll();
+</script>
+</body>
+</html>
